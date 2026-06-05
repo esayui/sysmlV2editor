@@ -27,7 +27,7 @@
 |------|------|:----:|:------:|:----:|------|----------|----------|
 | M-FE-01 | [Canvas Engine](M-FE-01-canvas-engine.md) | ✅ 已完成 | 20 | 20 | SH-01 | 2026-06-05 | 2026-06-05 |
 | M-FE-02 | [Element Renderers](M-FE-02-element-renderers.md) | ✅ 已完成 | 18 | 18 | FE-01, FE-08 | 2026-06-05 | 2026-06-05 |
-| M-FE-03 | [Connection Manager](M-FE-03-connection-manager.md) | ⬜ 未开始 | 14 | 0 | FE-01, FE-02 | — | — |
+| M-FE-03 | [Connection Manager](M-FE-03-connection-manager.md) | ✅ 已完成 | 14 | 14 | FE-01, FE-02 | 2026-06-05 | 2026-06-05 |
 | M-FE-04 | [Interaction Handler](M-FE-04-interaction-handler.md) | ✅ 已完成 | 17 | 17 | FE-01, FE-08 | 2026-06-05 | 2026-06-05 |
 | M-FE-05 | [Toolbox Panel](M-FE-05-toolbox-panel.md) | ⬜ 未开始 | 14 | 0 | FE-01, FE-04, FE-08 | — | — |
 | M-FE-06 | [Properties Panel](M-FE-06-properties-panel.md) | ⬜ 未开始 | 17 | 0 | FE-01, FE-02, FE-08 | — | — |
