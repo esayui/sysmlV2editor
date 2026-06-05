@@ -71,6 +71,9 @@ export interface CanvasSlice {
   /** 设置当前活动的图 */
   setActiveDiagram: (diagramId: string | null) => void;
 
+  /** 删除一个 Diagram */
+  removeDiagram: (diagramId: string) => void;
+
   /** 在指定 Diagram 中添加节点 */
   addNodeToDiagram: (diagramId: string, node: DiagramNode) => void;
 
@@ -105,6 +108,9 @@ export interface UISlice {
   /** 工具箱搜索过滤文本 */
   toolboxFilter: string;
 
+  /** 当前选中的工具箱元素类型（click-to-place） */
+  activeToolboxElementType: string | null;
+
   /** 模型树搜索过滤文本 */
   treeFilter: string;
 
@@ -122,6 +128,9 @@ export interface UISlice {
 
   /** 设置工具箱过滤 */
   setToolboxFilter: (filter: string) => void;
+
+  /** 设置当前选中的工具箱元素类型 */
+  setActiveToolboxElementType: (elementType: string | null) => void;
 
   /** 设置模型树过滤 */
   setTreeFilter: (filter: string) => void;

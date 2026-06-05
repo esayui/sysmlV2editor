@@ -43,6 +43,7 @@ export function ToolboxPanel(): React.ReactElement {
   const filterText = useStore((s) => s.toolboxFilter);
   const setFilterText = useStore((s) => s.setToolboxFilter);
   const setInteractionMode = useStore((s) => s.setInteractionMode);
+  const setActiveToolboxElementType = useStore((s) => s.setActiveToolboxElementType);
   const activeDiagramId = useStore((s) => s.activeDiagramId);
   const canvasModel = useStore((s) => s.canvasModel);
   const activeDiagramType = canvasModel.diagrams.find((d) => d.id === activeDiagramId)?.type ?? null;
@@ -164,13 +165,15 @@ export function ToolboxPanel(): React.ReactElement {
         // 再次点击 → 取消选中
         setSelectedItemId(null);
         setInteractionMode('select');
+        setActiveToolboxElementType(null);
       } else {
         // 选中
         setSelectedItemId(item.id);
         setInteractionMode('create-block');
+        setActiveToolboxElementType(item.elementType);
       }
     },
-    [selectedItemId, setInteractionMode],
+    [selectedItemId, setInteractionMode, setActiveToolboxElementType],
   );
 
   // =========================================================================

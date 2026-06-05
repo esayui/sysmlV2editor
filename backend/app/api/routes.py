@@ -380,22 +380,22 @@ async def export_png(request: ExportPNGRequest):
 
 @router.get("/project/list")
 async def list_projects():
-    """Return all registered projects from the persistent SQLite registry."""
+    """Return all registered projects. Auto-removes entries with missing paths."""
+    import os as _os
     from app.services.project_registry import get_project_registry
 
     registry = get_project_registry()
     records = registry.list_all()
-    return {
-        "projects": [
-            {
-                "name": r.name,
-                "path": r.path,
-                "created": r.created,
-                "modified": r.modified,
-            }
-            for r in records
-        ]
-    }
+    valid: list[dict] = []
+    for r in records:
+        if _os.path.exists(r.path) or _os.path.exists(_os.path.dirname(r.path)):
+            valid.append({
+                "name": r.name, "path": r.path,
+                "created": r.created, "modified": r.modified,
+            })
+        else:
+            registry.remove(r.path)  # Auto-clean stale entries
+    return {"projects": valid}
 
 
 # =============================================================================
@@ -410,7 +410,7 @@ class RegisterProjectRequest(BaseModel):
 
 @router.post("/project/register")
 async def register_project(request: RegisterProjectRequest):
-    """Register a project in the persistent registry (called on create/open)."""
+    """Register a project in the persistent registry."""
     from app.services.project_registry import get_project_registry
 
     registry = get_project_registry()
@@ -418,9 +418,52 @@ async def register_project(request: RegisterProjectRequest):
     return {
         "success": True,
         "project": {
-            "name": record.name,
-            "path": record.path,
-            "created": record.created,
-            "modified": record.modified,
+            "name": record.name, "path": record.path,
+            "created": record.created, "modified": record.modified,
+        },
+    }
+
+
+# =============================================================================
+#  11.  Project Delete  —  DELETE /api/v1/project/delete
+# =============================================================================
+
+
+class DeleteProjectRequest(BaseModel):
+    path: str
+
+
+@router.post("/project/delete")
+async def delete_project(request: DeleteProjectRequest):
+    """Remove a project from the registry (does not delete files on disk)."""
+    from app.services.project_registry import get_project_registry
+
+    registry = get_project_registry()
+    removed = registry.remove(request.path)
+    return {"success": removed}
+
+
+# =============================================================================
+#  12.  Project Rename  —  POST /api/v1/project/rename
+# =============================================================================
+
+
+class RenameProjectRequest(BaseModel):
+    path: str
+    new_name: str
+
+
+@router.post("/project/rename")
+async def rename_project(request: RenameProjectRequest):
+    """Rename a project in the registry."""
+    from app.services.project_registry import get_project_registry
+
+    registry = get_project_registry()
+    record = registry.register(request.new_name, request.path)
+    return {
+        "success": True,
+        "project": {
+            "name": record.name, "path": record.path,
+            "created": record.created, "modified": record.modified,
         },
     }

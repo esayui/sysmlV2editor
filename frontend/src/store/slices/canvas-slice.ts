@@ -42,6 +42,19 @@ export const createCanvasSlice: StateCreator<
   setActiveDiagram: (diagramId) =>
     set({ activeDiagramId: diagramId }),
 
+  removeDiagram: (diagramId) =>
+    set((state) => {
+      const remaining = state.canvasModel.diagrams.filter((d) => d.id !== diagramId);
+      return {
+        canvasModel: { ...state.canvasModel, diagrams: remaining },
+        activeDiagramId:
+          state.activeDiagramId === diagramId
+            ? (remaining.length > 0 ? remaining[0].id : null)
+            : state.activeDiagramId,
+        isDirty: true,
+      };
+    }),
+
   addNodeToDiagram: (diagramId: string, node: DiagramNode) =>
     set((state) => ({
       canvasModel: {

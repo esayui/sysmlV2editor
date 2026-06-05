@@ -1,0 +1,17 @@
+{
+  "formatVersion": "1.0",
+  "metadata": {
+    "name": "1",
+    "created": "2026-06-05T06:59:08.800410+00:00",
+    "modified": "2026-06-05T06:59:08.800410+00:00",
+    "version": "1.0"
+  },
+  "semanticModel": {
+    "id": "",
+    "name": "1",
+    "elements": [],
+    "relationships": [],
+    "packages": []
+  },
+  "canvasModel": {}
+}

@@ -12,6 +12,7 @@ export const createUISlice: StateCreator<AppStore, [], [], UISlice> = (
   selectedElementIds: [],
   interactionMode: 'select' as InteractionMode,
   toolboxFilter: '',
+  activeToolboxElementType: null,
   treeFilter: '',
   isDirty: false,
 
@@ -33,6 +34,11 @@ export const createUISlice: StateCreator<AppStore, [], [], UISlice> = (
   setToolboxFilter: (filter: string) =>
     set({
       toolboxFilter: filter,
+    }),
+
+  setActiveToolboxElementType: (elementType: string | null) =>
+    set({
+      activeToolboxElementType: elementType,
     }),
 
   setTreeFilter: (filter: string) =>

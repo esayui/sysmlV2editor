@@ -33,10 +33,13 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
 
   const addElement = useStore((s) => s.addElement);
   const addNodeToDiagram = useStore((s) => s.addNodeToDiagram);
+  const removeDiagram = useStore((s) => s.removeDiagram);
   const semanticModel = useStore((s) => s.semanticModel);
   const canvasModel = useStore((s) => s.canvasModel);
   const activeDiagramId = useStore((s) => s.activeDiagramId);
   const activeDiagram = canvasModel.diagrams.find((d) => d.id === activeDiagramId);
+  const engineRef = useRef(engine);
+  engineRef.current = engine;
 
   // 图图标映射
   const DIAGRAM_ICONS: Record<string, string> = {
@@ -173,10 +176,42 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     handler.onIntent('drop:from-toolbox', callback);
     dropCallbackRef.current = callback;
 
-    return () => {
-      if (dropCallbackRef.current) {
-        handler.offIntent('drop:from-toolbox', dropCallbackRef.current);
+    // canvas:click → click-to-place (工具箱选中后点击画布放置)
+    const clickCallback: IntentCallback = (payload) => {
+      const elemType = useStore.getState().activeToolboxElementType;
+      if (!elemType) return;
+      const pos = payload.scenePoint || payload.viewportPoint;
+      if (!pos) return;
+
+      const elemId = genId();
+      const newElement: SemanticElement = {
+        id: elemId, name: elemType,
+        qualifiedName: `${projectName}::${elemType}`,
+        type: elemType as ElementType, ownerId: null, description: '', properties: {},
+      };
+      addElement(newElement);
+      const activeDId = useStore.getState().activeDiagramId;
+      if (activeDId && globalRegistry && engineRef.current) {
+        try {
+          const fObj = globalRegistry.createCanvasObject(newElement, pos);
+          if (fObj) {
+            const node: DiagramNode = {
+              id: `canvas_node:${elemId}`, semanticElementId: elemId,
+              x: pos.x, y: pos.y, width: fObj.width ?? 160, height: fObj.height ?? 80,
+              style: { fillColor: '#FFFFFF', strokeColor: '#333333', strokeWidth: 2, fontSize: 14, fontFamily: 'sans-serif', fontColor: '#333333', opacity: 1, borderRadius: 8, showShadow: false },
+              collapsed: false, zIndex: 0, locked: false,
+            };
+            addNodeToDiagram(activeDId, node);
+            engineRef.current.addObject(fObj);
+          }
+        } catch { /* ignore */ }
       }
+    };
+    handler.onIntent('canvas:click', clickCallback);
+
+    return () => {
+      if (dropCallbackRef.current) handler.offIntent('drop:from-toolbox', dropCallbackRef.current);
+      handler.offIntent('canvas:click', clickCallback);
       handler.destroy();
       interactionRef.current = null;
     };
@@ -277,6 +312,14 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
               <span className="diagram-tab-icon">{DIAGRAM_ICONS[d.type] ?? '📊'}</span>
               <span className="diagram-tab-label">{DIAGRAM_NAMES[d.type] ?? d.type}</span>
               <span className="diagram-tab-name">{d.name}</span>
+              <span
+                className="diagram-tab-close"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeDiagram(d.id);
+                }}
+                title="关闭视图"
+              >×</span>
             </div>
           ))}
           {activeDiagram && (
