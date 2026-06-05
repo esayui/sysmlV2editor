@@ -27,8 +27,8 @@ function genId(): string {
 }
 
 function ModelingPage({ projectName, onBack }: { projectName: string; onBack: () => void }) {
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const engine = useCanvasEngine(canvasContainerRef, DEFAULT_CANVAS_CONFIG);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const engine = useCanvasEngine(canvasRef, DEFAULT_CANVAS_CONFIG);
   const interactionRef = useRef<InteractionHandler | null>(null);
   const dropCallbackRef = useRef<IntentCallback | null>(null);
 
@@ -244,7 +244,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
         dt.getData('application/sysml2-element-type') || dt.getData('text/plain');
       if (!elementType || !engine) return;
 
-      const rect = canvasContainerRef.current?.getBoundingClientRect();
+      const rect = canvasRef.current?.getBoundingClientRect();
       if (!rect) return;
       const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
@@ -331,7 +331,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
             </span>
           )}
         </div>
-        <div className="fabric-wrapper" ref={canvasContainerRef} />
+        <canvas className="fabric-wrapper" ref={canvasRef} />
         {!engine && (
           <div className="canvas-placeholder">
             <div className="canvas-hint">

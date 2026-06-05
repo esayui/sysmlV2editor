@@ -146,13 +146,6 @@
   flex: 1;
   min-height: 0;
   min-width: 0;
-  overflow: hidden;
-}
-
-/* Fabric.js v6 创建的 canvas-container wrapper 撑满 */
-.fabric-wrapper > .canvas-container {
-  width: 100% !important;
-  height: 100% !important;
 }
 
 .canvas-placeholder {

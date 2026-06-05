@@ -52,7 +52,7 @@ export interface CanvasJSON {
 
 export interface ICanvasEngine {
   /** 初始化画布，绑定到 DOM 容器 */
-  initialize(container: HTMLDivElement, config: CanvasConfig): void;
+  initialize(canvasEl: HTMLCanvasElement, config: CanvasConfig): void;
 
   /** 销毁画布实例，释放资源 */
   destroy(): void;
@@ -158,25 +158,16 @@ export class CanvasEngine implements ICanvasEngine {
   // 生命周期
   // =========================================================================
 
-  initialize(container: HTMLDivElement, config: CanvasConfig): void {
+  initialize(canvasEl: HTMLCanvasElement, config: CanvasConfig): void {
     if (this.canvas) {
       throw new Error('CanvasEngine is already initialized. Call destroy() first.');
     }
 
     this.config = { ...config };
 
-    const w = container.clientWidth || config.width;
-    const h = container.clientHeight || config.height;
-
-    // 让 Fabric.js 创建 canvas 并插入到容器中
-    const canvasEl = document.createElement('canvas');
-    canvasEl.id = `fabric-canvas-${Date.now()}`;
-    container.appendChild(canvasEl);
-    container.style.overflow = 'hidden';
-
-    this.canvas = new Canvas(canvasEl.id, {
-      width: w,
-      height: h,
+    this.canvas = new Canvas(canvasEl, {
+      width: canvasEl.width || config.width,
+      height: canvasEl.height || config.height,
       backgroundColor: config.backgroundColor,
       selection: true,
       preserveObjectStacking: true,
@@ -779,19 +770,19 @@ export class CanvasEngine implements ICanvasEngine {
  * ```
  */
 export function useCanvasEngine(
-  containerRef: RefObject<HTMLDivElement>,
+  canvasRef: RefObject<HTMLCanvasElement>,
   config?: Partial<CanvasConfig>,
 ): CanvasEngine | null {
   const engineRef = useRef<CanvasEngine | null>(null);
   const [engine, setEngine] = useState<CanvasEngine | null>(null);
 
   useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+    const canvasEl = canvasRef.current;
+    if (!canvasEl) return;
 
     const instance = new CanvasEngine();
     const mergedConfig: CanvasConfig = { ...DEFAULT_CANVAS_CONFIG, ...config };
-    instance.initialize(container, mergedConfig);
+    instance.initialize(canvasEl, mergedConfig);
     engineRef.current = instance;
     setEngine(instance);
 
@@ -800,7 +791,6 @@ export function useCanvasEngine(
       engineRef.current = null;
       setEngine(null);
     };
-    // 仅在挂载时初始化，配置变更不重新初始化
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
