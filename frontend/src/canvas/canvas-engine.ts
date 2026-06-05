@@ -172,6 +172,7 @@ export class CanvasEngine implements ICanvasEngine {
       selection: true,
       preserveObjectStacking: true,
       renderOnAddRemove: true,
+      enableRetinaScaling: true,
       stopContextMenu: true,
       fireMiddleClick: true,
     });

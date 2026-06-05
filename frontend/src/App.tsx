@@ -211,9 +211,18 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     };
     handler.onIntent('canvas:click', clickCallback);
 
+    // element:click → 同步选中到 store → 模型树 + 属性面板
+    const selectCallback: IntentCallback = (payload) => {
+      if (payload.elementId) {
+        useStore.getState().selectElements([payload.elementId as string]);
+      }
+    };
+    handler.onIntent('element:click', selectCallback);
+
     return () => {
       if (dropCallbackRef.current) handler.offIntent('drop:from-toolbox', dropCallbackRef.current);
       handler.offIntent('canvas:click', clickCallback);
+      handler.offIntent('element:click', selectCallback);
       handler.destroy();
       interactionRef.current = null;
     };
