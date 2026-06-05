@@ -7,7 +7,7 @@ import { Canvas, FabricObject, Point as FabricPoint, Group, Line } from 'fabric'
 import type { XY } from 'fabric';
 import type { CanvasConfig, Point, ViewportState } from '@/types/canvas-model';
 import { DEFAULT_CANVAS_CONFIG } from '@/types/canvas-model';
-import { useRef, useEffect, type RefObject } from 'react';
+import { useRef, useEffect, useState, type RefObject } from 'react';
 
 // ===========================================================================
 // 类型定义
@@ -780,23 +780,26 @@ export function useCanvasEngine(
   config?: Partial<CanvasConfig>,
 ): CanvasEngine | null {
   const engineRef = useRef<CanvasEngine | null>(null);
+  const [engine, setEngine] = useState<CanvasEngine | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const engine = new CanvasEngine();
+    const instance = new CanvasEngine();
     const mergedConfig: CanvasConfig = { ...DEFAULT_CANVAS_CONFIG, ...config };
-    engine.initialize(container, mergedConfig);
-    engineRef.current = engine;
+    instance.initialize(container, mergedConfig);
+    engineRef.current = instance;
+    setEngine(instance);
 
     return () => {
-      engine.destroy();
+      instance.destroy();
       engineRef.current = null;
+      setEngine(null);
     };
     // 仅在挂载时初始化，配置变更不重新初始化
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return engineRef.current;
+  return engine;
 }

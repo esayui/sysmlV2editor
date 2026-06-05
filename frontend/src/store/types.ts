@@ -65,6 +65,12 @@ export interface CanvasSlice {
   /** 当前活动的图 ID */
   activeDiagramId: string | null;
 
+  /** 新建一个 Diagram */
+  addDiagram: (diagram: import('@/types/canvas-model').Diagram) => void;
+
+  /** 设置当前活动的图 */
+  setActiveDiagram: (diagramId: string | null) => void;
+
   /** 在指定 Diagram 中添加节点 */
   addNodeToDiagram: (diagramId: string, node: DiagramNode) => void;
 

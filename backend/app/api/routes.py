@@ -9,6 +9,8 @@ Implements the endpoints specified in detailed-design.md §4.6.2 and
 
 from __future__ import annotations
 
+import os
+from pydantic import BaseModel
 from fastapi import APIRouter
 
 from app.models.schemas import (
@@ -142,6 +144,16 @@ def _get_file_service() -> FileService:
     return _file_service
 
 
+def _register_in_registry(name: str, path: str) -> None:
+    """Auto-register a project in the SQLite registry (best-effort)."""
+    try:
+        from app.services.project_registry import get_project_registry
+        registry = get_project_registry()
+        registry.register(name, path)
+    except Exception:
+        pass  # Registry registration is best-effort; don't break main flow
+
+
 def _project_data_to_pydantic(pd: ProjectData) -> ProjectDataDict:
     """Convert a FileService ProjectData to a Pydantic ProjectDataDict."""
     return ProjectDataDict(
@@ -172,6 +184,9 @@ async def create_project(request: CreateProjectRequest):
     """
     fs = _get_file_service()
     project_data = fs.create_project(request.dir_path, request.name)
+    # Auto-register in persistent project list
+    proj_path = os.path.join(request.dir_path, request.name, f"{request.name}.sysml2proj")
+    _register_in_registry(request.name, proj_path)
     return CreateProjectResponse(project_data=_project_data_to_pydantic(project_data))
 
 
@@ -198,6 +213,8 @@ async def open_project(request: OpenProjectRequest):
     """
     fs = _get_file_service()
     project_data = fs.open_project(request.file_path)
+    # Auto-register in persistent project list
+    _register_in_registry(project_data.metadata.name, request.file_path)
     return OpenProjectResponse(project_data=_project_data_to_pydantic(project_data))
 
 
@@ -354,3 +371,56 @@ async def export_png(request: ExportPNGRequest):
     file_size = os.path.getsize(file_path) if os.path.isfile(file_path) else 0
 
     return ExportResponse(success=True, file_path=file_path, file_size=file_size)
+
+
+# =============================================================================
+#  9.  Project List  —  GET /api/v1/project/list
+# =============================================================================
+
+
+@router.get("/project/list")
+async def list_projects():
+    """Return all registered projects from the persistent SQLite registry."""
+    from app.services.project_registry import get_project_registry
+
+    registry = get_project_registry()
+    records = registry.list_all()
+    return {
+        "projects": [
+            {
+                "name": r.name,
+                "path": r.path,
+                "created": r.created,
+                "modified": r.modified,
+            }
+            for r in records
+        ]
+    }
+
+
+# =============================================================================
+#  10.  Project Register  —  POST /api/v1/project/register
+# =============================================================================
+
+
+class RegisterProjectRequest(BaseModel):
+    name: str
+    path: str
+
+
+@router.post("/project/register")
+async def register_project(request: RegisterProjectRequest):
+    """Register a project in the persistent registry (called on create/open)."""
+    from app.services.project_registry import get_project_registry
+
+    registry = get_project_registry()
+    record = registry.register(request.name, request.path)
+    return {
+        "success": True,
+        "project": {
+            "name": record.name,
+            "path": record.path,
+            "created": record.created,
+            "modified": record.modified,
+        },
+    }

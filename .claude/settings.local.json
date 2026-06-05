@@ -13,7 +13,17 @@
       "Bash(D:/conda/Scripts/conda.exe info *)",
       "Bash(D:/conda/Scripts/conda.exe create *)",
       "Bash(D:/conda/Scripts/conda.exe run *)",
-      "Bash(npx vitest *)"
+      "Bash(npx vitest *)",
+      "Read(//c/Program Files/GitHub CLI/**)",
+      "Bash(where gh.exe)",
+      "Bash(C:/Program Files/GitHub CLI/gh.exe auth *)",
+      "Bash(\"C:/Program Files/GitHub CLI/gh.exe\" auth login --hostname github.com --web)",
+      "Bash(C:/Program Files/GitHub CLI/gh.exe repo *)",
+      "Bash(npx vite *)",
+      "Bash(curl -s http://127.0.0.1:8000/api/v1/health)",
+      "Bash(curl -s -o /dev/null -w \"Frontend HTTP status: %{http_code}\" http://127.0.0.1:5173)",
+      "Bash(curl *)",
+      "Bash(powershell -Command \"Stop-Process -Id 24824 -Force\")"
     ]
   }
 }

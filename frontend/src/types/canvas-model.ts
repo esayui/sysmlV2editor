@@ -31,6 +31,9 @@ export interface Diagram {
   /** 图中所有连线 */
   edges: DiagramEdge[];
 
+  /** 视图所属的元素 ID（模型树中显示在该元素下） */
+  ownerElementId?: string | null;
+
   /** 视口状态 */
   viewport: ViewportState;
 
@@ -44,6 +47,7 @@ export interface Diagram {
 export type DiagramType =
   | 'BDD'   // Block Definition Diagram
   | 'IBD'   // Internal Block Diagram
+  | 'PKG'   // Package Diagram
   | 'ACT'   // Activity Diagram
   | 'STM'   // State Machine Diagram
   | 'SD'    // Sequence Diagram

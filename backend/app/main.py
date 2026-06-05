@@ -1,6 +1,7 @@
 """
 SysML v2 Modeler — FastAPI Application Entry Point
 """
+import os
 import time
 import logging
 
@@ -17,6 +18,7 @@ from app.services.file_service import (
     ProjectNotFoundError as FileServiceProjectNotFoundError,
     SaveError,
 )
+from app.services.project_registry import init_project_registry
 
 # ---------------------------------------------------------------------------
 #  Logging
@@ -213,6 +215,18 @@ async def generic_exception_handler(request: Request, exc: Exception):
         },
     )
 
+
+# ===================================================================
+#  Router Registration
+# ===================================================================
+
+# ===================================================================
+#  Project Registry Initialization
+# ===================================================================
+
+_registry_db_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+init_project_registry(_registry_db_dir)
+logger.info("ProjectRegistry initialized at %s", os.path.join(_registry_db_dir, "projects.db"))
 
 # ===================================================================
 #  Router Registration

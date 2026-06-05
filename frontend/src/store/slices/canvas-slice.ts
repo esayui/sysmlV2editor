@@ -29,6 +29,19 @@ export const createCanvasSlice: StateCreator<
   canvasModel: createEmptyCanvasModel(),
   activeDiagramId: null,
 
+  addDiagram: (diagram) =>
+    set((state) => ({
+      canvasModel: {
+        ...state.canvasModel,
+        diagrams: [...state.canvasModel.diagrams, diagram],
+      },
+      activeDiagramId: diagram.id,
+      isDirty: true,
+    })),
+
+  setActiveDiagram: (diagramId) =>
+    set({ activeDiagramId: diagramId }),
+
   addNodeToDiagram: (diagramId: string, node: DiagramNode) =>
     set((state) => ({
       canvasModel: {

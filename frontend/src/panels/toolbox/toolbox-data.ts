@@ -1,9 +1,47 @@
 // ===========================================================================
-// Toolbox Data — 默认工具箱分类与条目
+// Toolbox Data — 默认工具箱分类与条目 + 图表类型过滤
 // 来源: 详细设计 §3.5.3
 // ===========================================================================
 
+import type { DiagramType } from '@/types/canvas-model';
 import type { ToolboxCategory, ToolboxItem } from './types';
+
+/**
+ * 每个图类型允许的 toolbox item ID 集合。
+ * 不在此集合中的 item 在该图类型下会被隐藏。
+ * 未列出的图类型（或 null = 无活跃图）显示全部。
+ */
+export const DIAGRAM_TOOLBOX_FILTER: Partial<Record<DiagramType, string[]>> = {
+  BDD:  ['part-def', 'port-def', 'interface-def', 'package', 'connection', 'comment'],
+  IBD:  ['part-usage', 'port-usage', 'connection', 'comment'],
+  PKG:  ['package', 'comment'],
+  PAR:  ['constraint-def', 'binding', 'comment'],
+  REQ:  ['requirement-def', 'stakeholder-req', 'satisfy', 'verify', 'comment'],
+  ACT:  ['action-def', 'connection', 'object-flow', 'comment'],
+  STM:  ['state-def', 'connection', 'comment'],
+  SD:   ['comment'],
+  UC:   ['use-case', 'actor', 'connection', 'comment'],
+};
+
+/**
+ * 根据活跃图类型过滤工具箱分类。
+ * 返回新的分类数组，空分类被移除。
+ */
+export function filterToolboxByDiagram(
+  categories: ToolboxCategory[],
+  diagramType: DiagramType | null,
+): ToolboxCategory[] {
+  if (!diagramType) return categories; // 无活跃图 → 显示全部
+  const allowed = DIAGRAM_TOOLBOX_FILTER[diagramType];
+  if (!allowed) return categories; // 未配置 → 显示全部
+
+  return categories
+    .map((cat) => ({
+      ...cat,
+      items: cat.items.filter((item) => allowed.includes(item.id)),
+    }))
+    .filter((cat) => cat.items.length > 0);
+}
 
 /**
  * 创建 ToolboxItem 的辅助函数，自动补全 icon 为 undefined。

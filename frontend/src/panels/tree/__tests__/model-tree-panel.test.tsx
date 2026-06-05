@@ -553,8 +553,8 @@ describe('ModelTreePanel', () => {
 
     await waitFor(() => {
       // Both root elements have visible suffixes
-      expect(screen.getByText('[Package]')).toBeInTheDocument();
-      expect(screen.getByText('[PartDef]')).toBeInTheDocument();
+      expect(screen.getByText('[包]')).toBeInTheDocument();
+      expect(screen.getByText('[部件定义]')).toBeInTheDocument();
     });
   });
 
@@ -723,9 +723,9 @@ describe('ModelTreePanel', () => {
     });
 
     const menuTexts = baseElement.textContent ?? '';
-    expect(menuTexts).toContain('Rename');
-    expect(menuTexts).toContain('New Child');
-    expect(menuTexts).toContain('Delete');
+    expect(menuTexts).toContain('重命名');
+    expect(menuTexts).toContain('新建子元素');
+    expect(menuTexts).toContain('删除');
   });
 
   it('4.11 right-click on package with diagram rep shows Locate in Diagram', async () => {
@@ -750,7 +750,7 @@ describe('ModelTreePanel', () => {
 
     await waitFor(() => {
       const menuTexts = baseElement.textContent ?? '';
-      expect(menuTexts).toContain('Locate in Diagram');
+      expect(menuTexts).toContain('在图定位');
     });
   });
 
@@ -786,7 +786,7 @@ describe('ModelTreePanel', () => {
 
     // Wait for the rename Modal to open
     await waitFor(() => {
-      expect(screen.getByText('Rename Element')).toBeInTheDocument();
+      expect(screen.getByText('重命名元素')).toBeInTheDocument();
     });
 
     // The modal has an input — find it and change the value

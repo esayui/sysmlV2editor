@@ -12,7 +12,7 @@ import React, {
   useRef,
 } from 'react';
 import useStore from '@/store';
-import { defaultToolboxItems } from './toolbox-data';
+import { defaultToolboxItems, filterToolboxByDiagram } from './toolbox-data';
 import { getToolboxIcon } from './icons';
 import type { ToolboxCategory, ToolboxItem } from './types';
 import './toolbox-panel.css';
@@ -43,6 +43,9 @@ export function ToolboxPanel(): React.ReactElement {
   const filterText = useStore((s) => s.toolboxFilter);
   const setFilterText = useStore((s) => s.setToolboxFilter);
   const setInteractionMode = useStore((s) => s.setInteractionMode);
+  const activeDiagramId = useStore((s) => s.activeDiagramId);
+  const canvasModel = useStore((s) => s.canvasModel);
+  const activeDiagramType = canvasModel.diagrams.find((d) => d.id === activeDiagramId)?.type ?? null;
 
   // ---- Local State ----
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -71,12 +74,14 @@ export function ToolboxPanel(): React.ReactElement {
    * 匹配中文 label 和英文 englishLabel。
    */
   const filteredCategories = useMemo((): ToolboxCategory[] => {
+    // 先根据活跃图类型过滤
+    const base = filterToolboxByDiagram(defaultToolboxItems, activeDiagramType);
     const query = filterText.trim().toLowerCase();
     if (!query) {
-      return defaultToolboxItems;
+      return base;
     }
 
-    return defaultToolboxItems
+    return base
       .map((category) => {
         const filteredItems = category.items.filter(
           (item) =>
