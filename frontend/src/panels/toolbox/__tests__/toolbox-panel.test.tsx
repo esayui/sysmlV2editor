@@ -256,8 +256,13 @@ describe('ToolboxPanel — Rendering', () => {
     render(<ToolboxPanel />);
 
     for (const cat of defaultToolboxItems) {
-      const header = screen.getByText(cat.label);
-      expect(header).toBeDefined();
+      // Use .toolbox-category-label to find category headers specifically,
+      // since some items share text with their category (e.g. "需求", "注释")
+      const headers = document.querySelectorAll('.toolbox-category-label');
+      const matchingHeader = Array.from(headers).find(
+        (el) => el.textContent === cat.label,
+      );
+      expect(matchingHeader).toBeDefined();
     }
   });
 
@@ -265,14 +270,20 @@ describe('ToolboxPanel — Rendering', () => {
     render(<ToolboxPanel />);
 
     // Expanded categories (structure, behavior, requirement, parametric, relationship)
-    // should show their items
+    // should show their items.
+    // Use unique labels where possible; for labels shared with category headers,
+    // use .toolbox-item-label class to disambiguate.
     const partDefItem = screen.getByText('部件定义');
     expect(partDefItem).toBeDefined();
 
     const actionItem = screen.getByText('动作');
     expect(actionItem).toBeDefined();
 
-    const reqItem = screen.getByText('需求');
+    // "需求" exists as both category header and item — use getAllByText
+    const reqTexts = screen.getAllByText('需求');
+    const reqItem = reqTexts.find((el) =>
+      el.classList.contains('toolbox-item-label'),
+    );
     expect(reqItem).toBeDefined();
 
     const constraintItem = screen.getByText('约束');
@@ -387,7 +398,8 @@ describe('ToolboxPanel — Search Filter', () => {
 
     expect(screen.getByText('端口定义')).toBeDefined();
     expect(screen.getByText('端口使用')).toBeDefined();
-    expect(screen.getByText('接口定义')).toBeDefined();
+    // "接口定义" does NOT contain "端口" as a substring
+    expect(screen.queryByText('接口定义')).toBeNull();
   });
 
   it('3.6 clearing filter should restore all items', () => {
@@ -903,16 +915,18 @@ describe('ToolboxPanel — Store Integration', () => {
     expect(useStore.getState().toolboxFilter).toBe('test');
   });
 
-  it('8.2 external store.toolboxFilter change should be reflected in input', () => {
+  it('8.2 external store.toolboxFilter change should be reflected in input', async () => {
     render(<ToolboxPanel />);
 
     useStore.getState().setToolboxFilter('external');
 
-    // Input value should reflect the store value
-    const searchInput = screen.getByPlaceholderText(
-      '搜索元素...',
-    ) as HTMLInputElement;
-    expect(searchInput.value).toBe('external');
+    // Input value should reflect the store value after React re-renders
+    await waitFor(() => {
+      const searchInput = screen.getByPlaceholderText(
+        '搜索元素...',
+      ) as HTMLInputElement;
+      expect(searchInput.value).toBe('external');
+    });
   });
 
   it('8.3 component should clean up keydown listener on unmount', () => {
@@ -1034,7 +1048,8 @@ describe('ToolboxPanel — Edge Cases', () => {
     const searchInput = screen.getByPlaceholderText('搜索元素...');
     fireEvent.change(searchInput, { target: { value: 'Comment' } });
 
-    // Item should be visible
-    expect(screen.getByText('注释')).toBeDefined();
+    // Both category header and item show "注释" — item should now be visible
+    const annotationTexts = screen.getAllByText('注释');
+    expect(annotationTexts.length).toBeGreaterThanOrEqual(2);
   });
 });

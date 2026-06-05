@@ -29,9 +29,9 @@
 | M-FE-02 | [Element Renderers](M-FE-02-element-renderers.md) | ✅ 已完成 | 18 | 18 | FE-01, FE-08 | 2026-06-05 | 2026-06-05 |
 | M-FE-03 | [Connection Manager](M-FE-03-connection-manager.md) | ✅ 已完成 | 14 | 14 | FE-01, FE-02 | 2026-06-05 | 2026-06-05 |
 | M-FE-04 | [Interaction Handler](M-FE-04-interaction-handler.md) | ✅ 已完成 | 17 | 17 | FE-01, FE-08 | 2026-06-05 | 2026-06-05 |
-| M-FE-05 | [Toolbox Panel](M-FE-05-toolbox-panel.md) | ⬜ 未开始 | 14 | 0 | FE-01, FE-04, FE-08 | — | — |
-| M-FE-06 | [Properties Panel](M-FE-06-properties-panel.md) | ⬜ 未开始 | 17 | 0 | FE-01, FE-02, FE-08 | — | — |
-| M-FE-07 | [Model Tree Panel](M-FE-07-model-tree-panel.md) | ⬜ 未开始 | 17 | 0 | FE-08 | — | — |
+| M-FE-05 | [Toolbox Panel](M-FE-05-toolbox-panel.md) | ✅ 已完成 | 14 | 14 | FE-01, FE-04, FE-08 | 2026-06-05 | 2026-06-05 |
+| M-FE-06 | [Properties Panel](M-FE-06-properties-panel.md) | ✅ 已完成 | 17 | 17 | FE-01, FE-02, FE-08 | 2026-06-05 | 2026-06-05 |
+| M-FE-07 | [Model Tree Panel](M-FE-07-model-tree-panel.md) | ✅ 已完成 | 17 | 17 | FE-08 | 2026-06-05 | 2026-06-05 |
 | M-FE-08 | [State Store](M-FE-08-state-store.md) | ✅ 已完成 | 20 | 20 | 2026-06-05 | 2026-06-05 |
 | M-FE-09 | [API Client](M-FE-09-api-client.md) | ✅ 已完成 | 16 | 16 | SH-01 | 2026-06-05 | 2026-06-05 |
 | M-FE-10 | [Undo/Redo Engine](M-FE-10-undo-redo-engine.md) | ✅ 已完成 | 18 | 18 | FE-08 | 2026-06-05 | 2026-06-05 |
@@ -47,7 +47,7 @@
 | M-BE-03 | [Model Validator](M-BE-03-model-validator.md) | ✅ 已完成 | 15 | 15 | BE-02 | 2026-06-05 | 2026-06-05 |
 | M-BE-04 | [File Service](M-BE-04-file-service.md) | ✅ 已完成 | 17 | 17 | BE-01, BE-02 | 2026-06-05 | 2026-06-05 |
 | M-BE-05 | [Export Service](M-BE-05-export-service.md) | ✅ 已完成 | 12 | 12 | — | 2026-06-05 | 2026-06-05 |
-| M-BE-06 | [API Layer](M-BE-06-api-layer.md) | ⬜ 未开始 | 19 | 0 | BE-02..05 | — | — |
+| M-BE-06 | [API Layer](M-BE-06-api-layer.md) | ✅ 已完成 | 19 | 19 | BE-02..05 | 2026-06-05 | 2026-06-05 |
 
 ---
 
