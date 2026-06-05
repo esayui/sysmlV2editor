@@ -175,16 +175,17 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
   calculateSize(element: SemanticElement): { width: number; height: number } {
     const props = element.properties as Partial<PartDefProperties>;
     const attrs = props.attributes ?? [];
-    // 名称可能换行，预估更宽的宽度
+    const ports = props.ports ?? [];
     const nameW = Math.min(this.estimateTextWidth(element.name, 14), 400) + PADDING * 2 + 20;
     let maxAttrW = 0;
     for (const a of attrs) {
       maxAttrW = Math.max(maxAttrW, this.estimateTextWidth(this.formatAttribute(a), 13) + PADDING * 3);
     }
     const w = Math.max(BLOCK_MIN_WIDTH, nameW, maxAttrW);
-    // 头部高度: 构造型行 + 名称行 + padding
     const estHeaderH = HEADER_HEIGHT + (element.name.length > 20 ? 18 : 0);
-    const h = estHeaderH + 6 + attrs.length * ATTRIBUTE_ROW_HEIGHT + PADDING;
+    // 给端口预留底部空间
+    const portSpace = ports.length > 0 ? PORT_SIZE + 4 : 0;
+    const h = estHeaderH + 6 + attrs.length * ATTRIBUTE_ROW_HEIGHT + PADDING + portSpace;
     return { width: w, height: Math.max(h, BLOCK_MIN_HEIGHT) };
   }
 

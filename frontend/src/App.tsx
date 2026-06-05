@@ -52,7 +52,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     REQ: '需求图', ACT: '活动图', STM: '状态机图', SD: '序列图', UC: '用例图',
   };
 
-  // ---- 监听元素变更 → 完全同步到画布 ----
+  // ---- 监听元素变更 → 同步画布 ----
   const prevElementsRef = useRef<Map<string, string>>(new Map());
   useEffect(() => {
     if (!engineRef.current) return;
@@ -62,26 +62,25 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     const currentIds = new Set(semanticModel.elements.map((e) => e.id));
 
     for (const el of semanticModel.elements) {
-      const oldSnapshot = prev.get(el.id);
       const newSnapshot = JSON.stringify({ name: el.name, type: el.type, props: el.properties });
+      const oldSnapshot = prev.get(el.id);
       if (oldSnapshot !== undefined && oldSnapshot !== newSnapshot) {
-        // 元素变化 → 删除旧对象，重新渲染
         const oldObjs = fabricCanvas.getObjects().filter(
           (o) => (o as { data?: { id?: string } }).data?.id === el.id,
         );
-        for (const oldObj of oldObjs) {
-          fabricCanvas.remove(oldObj);
-        }
+        // 保存旧位置
+        const oldLeft = oldObjs[0]?.left ?? 100;
+        const oldTop = oldObjs[0]?.top ?? 100;
+        for (const oldObj of oldObjs) fabricCanvas.remove(oldObj);
         try {
           const node = canvasModel.diagrams
             .find((d) => d.id === activeDiagramId)
             ?.nodes.find((n) => n.semanticElementId === el.id);
-          const pos = node ? { x: node.x, y: node.y } : { x: 100, y: 100 };
           const renderer = globalRegistry.get(el.type);
           const newObj = renderer.render(el, node?.style);
-          newObj.set({ left: pos.x, top: pos.y });
-          (engineRef.current as unknown as { addObject: (o: FabricObject) => void }).addObject(newObj);
-          // Update node dimensions
+          // 保持原位置不变
+          newObj.set({ left: oldLeft, top: oldTop });
+          engineRef.current!.addObject(newObj);
           if (node) {
             useStore.getState().addNodeToDiagram(
               activeDiagramId!,
@@ -92,18 +91,45 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
       }
       prev.set(el.id, newSnapshot);
     }
-    // Clean up deleted elements
     for (const [id] of prev) {
       if (!currentIds.has(id)) {
-        const oldObjs = fabricCanvas.getObjects().filter(
-          (o) => (o as { data?: { id?: string } }).data?.id === id,
-        );
-        for (const oldObj of oldObjs) fabricCanvas.remove(oldObj);
+        for (const o of fabricCanvas.getObjects()) {
+          if ((o as { data?: { id?: string } }).data?.id === id) fabricCanvas.remove(o);
+        }
         prev.delete(id);
       }
     }
     fabricCanvas.requestRenderAll();
   }, [semanticModel.elements, activeDiagramId]);
+
+  // ---- 监听节点样式变更 → 同步画布 ----
+  const prevStylesRef = useRef<Map<string, string>>(new Map());
+  useEffect(() => {
+    if (!engineRef.current) return;
+    const allNodes = canvasModel.diagrams.flatMap((d) => d.nodes);
+    const fabricCanvas = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[]; requestRenderAll: () => void } }).canvas;
+    if (!fabricCanvas) return;
+    for (const node of allNodes) {
+      const newStyle = JSON.stringify(node.style);
+      const oldStyle = prevStylesRef.current.get(node.id);
+      if (oldStyle !== undefined && oldStyle !== newStyle) {
+        for (const obj of fabricCanvas.getObjects()) {
+          if ((obj as { data?: { id?: string } }).data?.id === node.semanticElementId) {
+            try {
+              const el = semanticModel.elements.find((e) => e.id === node.semanticElementId);
+              if (el) {
+                const renderer = globalRegistry.get(el.type);
+                renderer.update(obj, el, node.style);
+                fabricCanvas.requestRenderAll();
+              }
+            } catch { /* pass */ }
+            break;
+          }
+        }
+      }
+      prevStylesRef.current.set(node.id, newStyle);
+    }
+  }, [canvasModel.diagrams]);
 
   // 获取元素类型的默认 properties
   const getDefaultProperties = (elemType: string): Record<string, unknown> => {
