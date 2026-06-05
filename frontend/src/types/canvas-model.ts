@@ -25,6 +25,9 @@ export interface Diagram {
   /** 图类型 */
   type: DiagramType;
 
+  /** 是否在 tab 栏中打开（关闭 tab ≠ 删除视图，默认 true） */
+  isOpen?: boolean;
+
   /** 图中所有节点 */
   nodes: DiagramNode[];
 

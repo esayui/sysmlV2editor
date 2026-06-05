@@ -33,7 +33,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
 
   const addElement = useStore((s) => s.addElement);
   const addNodeToDiagram = useStore((s) => s.addNodeToDiagram);
-  const removeDiagram = useStore((s) => s.removeDiagram);
+  const closeDiagram = useStore((s) => s.closeDiagram);
   const semanticModel = useStore((s) => s.semanticModel);
   const canvasModel = useStore((s) => s.canvasModel);
   const activeDiagramId = useStore((s) => s.activeDiagramId);
@@ -100,6 +100,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
               name: 'Main BDD',
               type: 'BDD',
               ownerElementId: rootPkgId,
+              isOpen: true,
               nodes: [],
               edges: [],
               viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -303,7 +304,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
           <button className="back-button" onClick={onBack} title="返回工程管理">
             ← 返回
           </button>
-          {canvasModel.diagrams.map((d) => (
+          {canvasModel.diagrams.filter((d) => d.isOpen !== false).map((d) => (
             <div
               key={d.id}
               className={`diagram-tab${d.id === activeDiagramId ? ' active' : ''}`}
@@ -316,7 +317,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
                 className="diagram-tab-close"
                 onClick={(e) => {
                   e.stopPropagation();
-                  removeDiagram(d.id);
+                  closeDiagram(d.id);
                 }}
                 title="关闭视图"
               >×</span>

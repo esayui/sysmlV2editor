@@ -42,6 +42,34 @@ export const createCanvasSlice: StateCreator<
   setActiveDiagram: (diagramId) =>
     set({ activeDiagramId: diagramId }),
 
+  closeDiagram: (diagramId) =>
+    set((state) => {
+      const diagrams = state.canvasModel.diagrams.map((d) =>
+        d.id === diagramId ? { ...d, isOpen: false } : d,
+      );
+      const openDiagrams = diagrams.filter((d) => d.isOpen);
+      return {
+        canvasModel: { ...state.canvasModel, diagrams },
+        activeDiagramId:
+          state.activeDiagramId === diagramId
+            ? (openDiagrams.length > 0 ? openDiagrams[0].id : null)
+            : state.activeDiagramId,
+        isDirty: true,
+      };
+    }),
+
+  openDiagram: (diagramId) =>
+    set((state) => ({
+      canvasModel: {
+        ...state.canvasModel,
+        diagrams: state.canvasModel.diagrams.map((d) =>
+          d.id === diagramId ? { ...d, isOpen: true } : d,
+        ),
+      },
+      activeDiagramId: diagramId,
+      isDirty: true,
+    })),
+
   removeDiagram: (diagramId) =>
     set((state) => {
       const remaining = state.canvasModel.diagrams.filter((d) => d.id !== diagramId);

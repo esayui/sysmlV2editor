@@ -401,7 +401,8 @@ export const ModelTreePanel: React.FC = () => {
   const handleSelect = useCallback((keys: React.Key[], info: { node: EventDataNode<ModelTreeNode> }) => {
     // 点击视图节点 → 切换活跃图
     if (info.node?.data?.isDiagramNode && info.node.data.diagram) {
-      useStore.setState({ activeDiagramId: info.node.data.diagram.id });
+      const d = info.node.data.diagram;
+      useStore.getState().openDiagram(d.id);
       return;
     }
     selectElements(keys.map((k) => String(k)));
@@ -450,6 +451,7 @@ export const ModelTreePanel: React.FC = () => {
       name: `${def?.label ?? diagramType}`,
       type: diagramType,
       ownerElementId: parentId,
+      isOpen: true,
       nodes: [], edges: [],
       viewport: { zoom: 1, panX: 0, panY: 0 },
       createdAt: new Date().toISOString(),

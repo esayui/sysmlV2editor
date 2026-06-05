@@ -71,7 +71,13 @@ export interface CanvasSlice {
   /** 设置当前活动的图 */
   setActiveDiagram: (diagramId: string | null) => void;
 
-  /** 删除一个 Diagram */
+  /** 关闭视图 tab（不删除，仅隐藏） */
+  closeDiagram: (diagramId: string) => void;
+
+  /** 打开已有关闭的视图 */
+  openDiagram: (diagramId: string) => void;
+
+  /** 删除一个 Diagram（永久） */
   removeDiagram: (diagramId: string) => void;
 
   /** 在指定 Diagram 中添加节点 */
