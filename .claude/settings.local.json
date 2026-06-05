@@ -23,7 +23,8 @@
       "Bash(curl -s http://127.0.0.1:8000/api/v1/health)",
       "Bash(curl -s -o /dev/null -w \"Frontend HTTP status: %{http_code}\" http://127.0.0.1:5173)",
       "Bash(curl *)",
-      "Bash(powershell -Command \"Stop-Process -Id 24824 -Force\")"
+      "Bash(powershell -Command \"Stop-Process -Id 24824 -Force\")",
+      "Bash(node -e \"const f = require\\('fabric'\\); console.log\\('Fabric version:', f.version\\)\")"
     ]
   }
 }
