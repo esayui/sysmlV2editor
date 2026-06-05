@@ -125,13 +125,19 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
     const mergedStyle = this.mergeStyle(style);
     const group = fObj as Group;
     const children = group.getObjects();
+    const bw = group.width! || BLOCK_MIN_WIDTH;
+    const maxW = bw * 0.8;
+
     const nameObj = children.find((c) => this.getObjectData(c)?.role === ChildRole.Name) as Text | undefined;
     if (nameObj) {
-      const bw = group.width;
-      const maxW = bw * 0.8;
-      nameObj.set({ text: element.name, width: maxW, left: (bw - maxW) / 2 });
+      nameObj.set({
+        text: element.name,
+        width: maxW,
+        left: bw / 2,
+        originX: 'center',
+      });
     }
-    // Update stereotype if element type changed
+
     const stereoObj = children.find((c) => this.getObjectData(c)?.role === 'stereotype') as Text | undefined;
     if (stereoObj) {
       const stereotypeMap: Record<string, string> = {
@@ -139,8 +145,9 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
         InterfaceDefinition: '«interface»', AttributeDefinition: '«attribute»',
         EnumerationDefinition: '«enumeration»',
       };
-      stereoObj.set({ text: stereotypeMap[element.type] ?? '«block»' });
+      stereoObj.set({ text: stereotypeMap[element.type] ?? '«block»', left: bw / 2, originX: 'center' });
     }
+
     this.applyStyle(group, mergedStyle);
     group.setCoords();
   }
@@ -185,10 +192,11 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
 
   private createPortIndicator(port: PortRef, bw: number, bh: number): Rect {
     const color = port.direction === 'in' ? '#4A90D9' : port.direction === 'out' ? '#D94A4A' : '#9B59B6';
+    const offset = PORT_SIZE / 2;
     let x = 0, y = 0;
-    if (port.direction === 'in') { x = -PORT_SIZE / 2; y = bh - PORT_SIZE / 2; }
-    else if (port.direction === 'out') { x = bw - PORT_SIZE / 2; y = bh - PORT_SIZE / 2; }
-    else { x = (bw - PORT_SIZE) / 2; y = bh - PORT_SIZE / 2; }
+    if (port.direction === 'in') { x = 0; y = bh - offset; }
+    else if (port.direction === 'out') { x = bw - PORT_SIZE; y = bh - offset; }
+    else { x = (bw - PORT_SIZE) / 2; y = bh - offset; }
 
     return new Rect({
       left: x, top: y, width: PORT_SIZE, height: PORT_SIZE,

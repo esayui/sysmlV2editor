@@ -127,9 +127,17 @@ function notNegative(value: unknown): string | null {
 
 // ---- 表格列定义 ----
 
+const TYPE_OPTIONS = [
+  { label: 'Real', value: 'Real' },
+  { label: 'Integer', value: 'Integer' },
+  { label: 'String', value: 'String' },
+  { label: 'Boolean', value: 'Boolean' },
+  { label: 'Complex', value: 'Complex' },
+];
+
 const ATTRIBUTE_COLUMNS: TableColumn[] = [
   { key: 'name', title: '名称', editType: 'text' },
-  { key: 'type', title: '类型', editType: 'text' },
+  { key: 'type', title: '类型', editType: 'select', options: TYPE_OPTIONS },
   { key: 'multiplicity', title: '多重性', editType: 'select', options: MULTIPLICITY_OPTIONS },
 ];
 
