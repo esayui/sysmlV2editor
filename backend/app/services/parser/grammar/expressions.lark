@@ -1,0 +1,54 @@
+// =============================================================================
+// SysML v2 Parser — Expressions
+// =============================================================================
+//
+// Depends on: common.lark (IDENTIFIER, NUMBER, ESCAPED_STRING)
+//             kernel.lark (qualified_name)
+//
+// Used in constraint bodies, default values, and other expression positions.
+// =============================================================================
+
+%import .common (IDENTIFIER, NUMBER, ESCAPED_STRING)
+%import .kernel (qualified_name)
+
+// Argument list for function calls (moved here from kernel to avoid circular deps)
+?argument_list: expression ("," expression)*
+
+
+?expression: or_expr
+
+?or_expr: and_expr
+        | or_expr "or" and_expr
+
+?and_expr: not_expr
+         | and_expr "and" not_expr
+
+?not_expr: comparison
+         | "not" not_expr
+
+?comparison: sum_expr
+           | sum_expr COMP_OP sum_expr
+
+COMP_OP: "==" | "!=" | "<=" | ">=" | "<" | ">"
+
+?sum_expr: product_expr
+         | sum_expr "+" product_expr
+         | sum_expr "-" product_expr
+
+?product_expr: unary_expr
+             | product_expr "*" unary_expr
+             | product_expr "/" unary_expr
+
+?unary_expr: "-" unary_expr  -> neg_expr
+           | primary_expr
+
+?primary_expr: NUMBER              -> num_literal
+             | ESCAPED_STRING      -> str_literal
+             | "true"              -> true_literal
+             | "false"             -> false_literal
+             | "null"              -> null_literal
+             | function_call
+             | qualified_name
+             | "(" expression ")"
+
+?function_call: IDENTIFIER "(" [argument_list] ")"

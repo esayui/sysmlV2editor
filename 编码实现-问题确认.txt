@@ -1,0 +1,52 @@
+在写 prompt 之前，有几个关键点需要确认：
+
+  ---
+  Q1. 执行模型
+
+  "主 Agent 生成子 Agent"的具体方式，你期望哪种？
+
+  - A) 单个会话串行执行：主 Agent 按 Phase 顺序，每个 Phase 内并行 spawn 子 Agent，等全部完成后进入下一 Phase。
+  - B) 多次独立会话：每次你手动启动一个新会话，主 Agent 读取 progress.md 判断下一步该做哪个模块，spawn 子 Agent
+  完成该模块，更新进度，会话结束。
+  - C) 全自动一口气跑完：一个 prompt 启动后，Agent 自动完成全部 17 个模块，中间不间断。
+
+  Q2. 失败处理策略
+
+  子 Agent 实现某个模块时如果测试不通过或遇到阻塞，应该：
+
+  - A) 重试（最多 N 次），失败后跳过该模块继续下一个，最后汇总失败列表
+  - B) 重试后暂停，等待人工介入
+  - C) 不重试，直接标记失败继续下一个
+
+  Q3. 代码提交策略
+
+  - A) 每完成一个模块，自动 git commit
+  - B) 每完成一个 Phase，自动 git commit
+  - C) 不自动 commit，只更新 progress.md 中的勾选状态
+
+  Q4. 测试覆盖率要求
+
+  详细设计中写了目标覆盖率（如 Store ≥95%、Parser ≥90%），实际执行时：
+
+  - A) 严格按设计文档的目标覆盖率执行，不达标 = 模块不通过
+  - B) 统一 ≥80% 作为通过线（简化）
+  - C) 只要所有子任务测试用例通过即可，不强制覆盖率百分比
+
+  Q5. TypeScript 严格程度
+
+  前端代码的 TypeScript 配置：
+
+  - A) strict: true（禁止隐式 any，严格空检查等）
+  - B) 适度放宽（strict: false，但禁止 any 类型）
+  - C) 不强制，能编译通过就行
+
+✻ Worked for 27s
+
+※ recap: 我们正在为 SysML v2 建模工具写自动化 vibe coding prompt。我刚提了 5 个问题（执行模式、失败处理、Git
+  策略、测试覆盖率、TypeScript 严格度），等你回答后我就开始写 `./doc/prompt.md`。 (disable recaps in /config)
+
+> Q1:C
+  Q2:A 最多3次
+  Q3:B
+  Q4:B
+  Q5:B

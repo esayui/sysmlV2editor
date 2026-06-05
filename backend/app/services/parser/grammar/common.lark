@@ -1,0 +1,36 @@
+// =============================================================================
+// SysML v2 Parser — Common Lexical Rules
+// =============================================================================
+//
+// Defines: keywords as implicit terminals, identifier/number/string patterns,
+//          whitespace and comment handling.
+//
+// In Lark LALR(1) mode, string-literals used in grammar rules automatically
+// become terminals and take priority over regex-based terminals like IDENTIFIER.
+//
+// Explicitly listed keyword terminals ensure the LALR lexer knows about all
+// reserved words before matching IDENTIFIER.
+// =============================================================================
+
+// ----- Primitive type names (reserved as keywords) ---------------------------
+REAL:     "Real"
+INTEGER:  "Integer"
+STRING_T: "String"
+BOOLEAN:  "Boolean"
+SCALAR:   "Scalar"
+COMPLEX:  "Complex"
+
+// ----- Token patterns --------------------------------------------------------
+IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/
+NUMBER:     /[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/
+ESCAPED_STRING: /"[^"]*"/
+
+// ----- Whitespace & Comments (%ignore) ---------------------------------------
+%ignore /[ \t\f\r\n]+/
+%ignore /\/\/[^\n]*/
+%ignore /\/\*([^*]|\*[^\/])*\*\//
+
+// ----- Multi-character operators (higher priority than single-char) ----------
+COLON_COLON: "::"
+COLON_GT:    ":>"
+DOT_DOT:     ".."

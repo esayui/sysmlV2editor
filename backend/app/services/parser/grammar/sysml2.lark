@@ -1,0 +1,269 @@
+// =============================================================================
+// SysML v2 Parser — Consolidated Lark Grammar (LALR(1))
+// =============================================================================
+//
+// Sections:
+//   1. Terminals       — IDENTIFIER, NUMBER, STRING, COMP_OP
+//   2. Ignored         — whitespace, comments
+//   3. Kernel          — qualified_name, type_ref, multiplicity, specialization
+//   4. Expressions     — or/and/not/comparison/arithmetic/unary/primary
+//   5. Declarations    — definitions, usages, features, relationships, comments
+//   6. Top-level       — model, package_member
+//
+// Usage:
+//   parser = lark.Lark.open("sysml2.lark", parser="lalr")
+//   tree = parser.parse("part def Vehicle { attribute mass: Real; }")
+// =============================================================================
+
+
+// =========================================================================
+//  1. Terminals
+// =========================================================================
+
+// ----- Token patterns ----------------------------------------------------
+IDENTIFIER: /[a-zA-Z_][a-zA-Z0-9_]*/
+NUMBER:     /[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/
+ESCAPED_STRING: /"[^"]*"/
+
+// ----- Comparison operators (single terminal for all) ---------------------
+COMP_OP: "==" | "!=" | "<=" | ">=" | "<" | ">"
+
+
+// =========================================================================
+//  2. Ignored (whitespace & comments)
+// =========================================================================
+
+%ignore /[ \t\f\r\n]+/
+%ignore /\/\/[^\n]*/
+%ignore /\/\*([^*]|\*[^\/])*\*\//
+
+
+// =========================================================================
+//  3. Kernel — qualified names, type references, multiplicity
+// =========================================================================
+
+?qualified_name: IDENTIFIER ("::" IDENTIFIER)*
+
+?type_ref: qualified_name
+         | "Real"     -> real_type
+         | "Integer"  -> integer_type
+         | "String"   -> string_type
+         | "Boolean"  -> boolean_type
+         | "Scalar"   -> scalar_type
+         | "Complex"  -> complex_type
+
+?multiplicity: "[" multiplicity_range "]"
+
+?multiplicity_range: NUMBER (".." (NUMBER | "*"))?  -> range_spec
+                   | "*"                             -> star_range
+
+specialization: ":>" qualified_name ("," qualified_name)*
+
+
+// =========================================================================
+//  4. Expressions
+// =========================================================================
+
+?parameter_list: parameter ("," parameter)*
+parameter: IDENTIFIER ":" type_ref
+
+?argument_list: expression ("," expression)*
+
+?expression: or_expr
+
+?or_expr: and_expr
+        | or_expr "or" and_expr
+
+?and_expr: not_expr
+         | and_expr "and" not_expr
+
+?not_expr: comparison
+         | "not" not_expr
+
+?comparison: sum_expr
+           | sum_expr COMP_OP sum_expr
+
+?sum_expr: product_expr
+         | sum_expr "+" product_expr
+         | sum_expr "-" product_expr
+
+?product_expr: unary_expr
+             | product_expr "*" unary_expr
+             | product_expr "/" unary_expr
+
+?unary_expr: "-" unary_expr  -> neg_expr
+           | primary_expr
+
+?primary_expr: NUMBER              -> num_literal
+             | ESCAPED_STRING      -> str_literal
+             | "true"              -> true_literal
+             | "false"             -> false_literal
+             | "null"              -> null_literal
+             | function_call
+             | qualified_name
+             | "(" expression ")"
+
+?function_call: IDENTIFIER "(" [argument_list] ")"
+
+
+// =========================================================================
+//  5. Declarations
+// =========================================================================
+
+// ----- 5a. Package --------------------------------------------------------
+package_decl: "package" IDENTIFIER "{" package_member* "}"
+
+
+// ----- 5b. Definition body ------------------------------------------------
+?definition_body: specialization? "{" feature* "}" -> def_body
+                | specialization? ";"                  -> def_stub
+
+
+// ----- 5c. Requirement body -----------------------------------------------
+requirement_body: "{" requirement_feature* "}"
+
+requirement_feature: "attribute" IDENTIFIER ":" type_ref ("=" expression)? ";"  -> req_attribute
+                   | "doc" ESCAPED_STRING ";"                                    -> req_doc
+                   | "id" ESCAPED_STRING ";"                                     -> req_id
+                   | "text" ESCAPED_STRING ";"                                   -> req_text_attr
+
+
+// ----- 5d. Constraint body ------------------------------------------------
+constraint_body: "(" [parameter_list] ")" "{" expression "}"  -> constraint_with_params
+               | "{" expression "}"                             -> constraint_bare
+
+
+// ----- 5e. Definitions (keyword + "def" + name + body) --------------------
+part_def:        "part"        "def" IDENTIFIER definition_body
+item_def:        "item"        "def" IDENTIFIER definition_body
+port_def:        "port"        "def" IDENTIFIER definition_body
+interface_def:   "interface"   "def" IDENTIFIER definition_body
+requirement_def: "requirement" "def" IDENTIFIER requirement_body
+constraint_def:  "constraint"  "def" IDENTIFIER constraint_body
+action_def:      "action"      "def" IDENTIFIER definition_body
+state_def:       "state"       "def" IDENTIFIER definition_body
+enumeration_def: "enumeration" "def" IDENTIFIER definition_body
+attribute_def:   "attribute"   "def" IDENTIFIER definition_body
+
+
+// ----- 5f. Usage body disambiguation --------------------------------------
+// After keyword + name, the lookahead determines usage form:
+//   ":"  -> typed usage      e.g.  part engine : Engine;
+//   "{"  -> usage with body   e.g.  part engine { ... }
+//   ";"  -> simple usage      e.g.  part engine;
+
+?usage_body: ":" type_ref multiplicity? ";"   -> typed_usage
+           | "{" feature* "}"                  -> block_usage
+           | ";"                               -> stub_usage
+
+
+// ----- 5g. Usages (keyword + name + usage_body) ---------------------------
+part_usage:        "part"        IDENTIFIER usage_body
+item_usage:        "item"        IDENTIFIER usage_body
+port_usage:        "port"        IDENTIFIER usage_body
+interface_usage:   "interface"   IDENTIFIER usage_body
+requirement_usage: "requirement" IDENTIFIER usage_body
+constraint_usage:  "constraint"  IDENTIFIER usage_body
+action_usage:      "action"      IDENTIFIER usage_body
+state_usage:       "state"       IDENTIFIER usage_body
+actor_usage:       "actor"       IDENTIFIER usage_body
+usecase_usage:     "use" "case"  IDENTIFIER usage_body
+
+
+// ----- 5h. Features (inside definition/usage bodies) ----------------------
+?feature: attribute_feature
+        | port_feature
+        | ref_feature
+        | port_def
+        | attribute_def
+        | part_usage
+        | item_usage
+        | action_usage
+        | state_usage
+        | constraint_usage
+        | requirement_usage
+        | relationship_stmt
+        | comment_stmt
+
+attribute_feature: "attribute" IDENTIFIER ":" type_ref multiplicity? ("=" expression)? ";"  -> typed_attribute
+                 | "attribute" IDENTIFIER ("=" expression)? ";"                               -> simple_attribute
+
+port_feature: "port" IDENTIFIER ":" type_ref ";"               -> port_feature_typed
+            | "port" IDENTIFIER ";"                              -> port_feature_bare
+            | "port" "in" IDENTIFIER ":" type_ref ";"           -> port_feature_in
+            | "port" "out" IDENTIFIER ":" type_ref ";"          -> port_feature_out
+            | "port" "inout" IDENTIFIER ":" type_ref ";"        -> port_feature_inout
+
+ref_feature: "ref" IDENTIFIER ":" type_ref ";"  -> ref_feature
+
+
+// ----- 5i. Relationships --------------------------------------------------
+?relationship_stmt: connection_stmt
+                  | binding_stmt
+                  | flow_stmt
+                  | satisfy_stmt
+                  | verify_stmt
+                  | allocation_stmt
+                  | subclassification_stmt
+                  | transition_stmt
+
+connection_stmt: "connect" qualified_name "to" qualified_name ";"
+
+binding_stmt: "binding" IDENTIFIER "connect" qualified_name "to" qualified_name ";"
+            | "binding" "connect" qualified_name "to" qualified_name ";"  -> binding_stmt_anon
+
+flow_stmt: "flow" IDENTIFIER "from" qualified_name "to" qualified_name ";"
+         | "flow" "from" qualified_name "to" qualified_name ";"  -> flow_stmt_anon
+
+satisfy_stmt: "satisfy" qualified_name "to" qualified_name ";"
+
+verify_stmt: "verify" qualified_name "to" qualified_name ";"
+
+allocation_stmt: "allocate" qualified_name "to" qualified_name ";"
+
+subclassification_stmt: qualified_name ":>" qualified_name ";"
+
+transition_stmt: "transition" IDENTIFIER "from" qualified_name "to" qualified_name ";"
+                | "transition" "from" qualified_name "to" qualified_name ";"  -> transition_stmt_anon
+
+
+// ----- 5j. Comment --------------------------------------------------------
+comment_stmt: "comment" IDENTIFIER ESCAPED_STRING ";"  -> comment_with_name
+            | "comment" ESCAPED_STRING ";"               -> comment_anon
+
+
+// =========================================================================
+//  6. Top-level model
+// =========================================================================
+
+?start: model
+
+model: package_member*
+
+?package_member: package_decl
+               | definition
+               | usage
+               | relationship_stmt
+               | comment_stmt
+
+?definition: part_def
+           | item_def
+           | port_def
+           | interface_def
+           | requirement_def
+           | constraint_def
+           | action_def
+           | state_def
+           | enumeration_def
+           | attribute_def
+
+?usage: part_usage
+      | item_usage
+      | port_usage
+      | interface_usage
+      | requirement_usage
+      | constraint_usage
+      | action_usage
+      | state_usage
+      | actor_usage
+      | usecase_usage

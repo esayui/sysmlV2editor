@@ -1,0 +1,35 @@
+// =============================================================================
+// SysML v2 Parser — Kernel / Core Syntax
+// =============================================================================
+//
+// Depends on: common.lark (IDENTIFIER, NUMBER, COLON_COLON, COLON_GT, DOT_DOT)
+//
+// Defines: qualified_name, type_ref, multiplicity, specialization, parameter_list
+//          (no expression dependency to avoid circular imports)
+// =============================================================================
+
+%import .common (IDENTIFIER, NUMBER, ESCAPED_STRING, COLON_COLON, COLON_GT, DOT_DOT)
+
+?qualified_name: IDENTIFIER ("::" IDENTIFIER)*
+
+// Type reference: can be a qualified name or a built-in primitive type.
+?type_ref: qualified_name
+         | "Real"     -> real_type
+         | "Integer"  -> integer_type
+         | "String"   -> string_type
+         | "Boolean"  -> boolean_type
+         | "Scalar"   -> scalar_type
+         | "Complex"  -> complex_type
+
+// Multiplicity range: [1], [0..*], [*], [2..5], etc.
+?multiplicity: "[" multiplicity_range "]"
+
+?multiplicity_range: NUMBER (".." (NUMBER | "*"))?  -> range_spec
+                   | "*"                             -> star_range
+
+// Specialization clause: :> SuperType1, SuperType2, ...
+?specialization: COLON_GT qualified_name ("," qualified_name)*
+
+// Parameter list for constraint definitions: name : Type, ...
+?parameter_list: parameter ("," parameter)*
+parameter: IDENTIFIER ":" type_ref

@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(timeout 5 python -c \"from app.main import app; print\\('FastAPI app import OK:', app.title\\)\")",
+      "Bash(where python *)",
+      "Bash(conda --version)",
+      "Bash(conda info *)",
+      "Bash(C:/Users/dousheng/AppData/Local/Microsoft/WindowsApps/python.exe --version)",
+      "Bash(D:/conda/Scripts/conda.exe --version)",
+      "Bash(D:/conda/Scripts/conda.exe info *)",
+      "Bash(D:/conda/Scripts/conda.exe create *)",
+      "Bash(D:/conda/Scripts/conda.exe run *)",
+      "Bash(npx vitest *)"
+    ]
+  }
+}

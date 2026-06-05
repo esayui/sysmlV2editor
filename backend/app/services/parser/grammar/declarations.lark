@@ -1,0 +1,189 @@
+// =============================================================================
+// SysML v2 Parser — Declarations (Definitions & Usages)
+// =============================================================================
+//
+// Depends on: common.lark (IDENTIFIER, ESCAPED_STRING)
+//             kernel.lark (qualified_name, type_ref, multiplicity, specialization,
+//                          parameter_list, parameter)
+//             expressions.lark (expression)
+// =============================================================================
+
+%import .common (IDENTIFIER, ESCAPED_STRING)
+%import .kernel (qualified_name, type_ref, multiplicity, specialization, parameter_list, parameter)
+%import .expressions (expression)
+
+
+// ---------------------------------------------------------------------------
+//  Top-level declarations (used from sysml2.lark)
+// ---------------------------------------------------------------------------
+
+?package_member: package_decl
+               | definition
+               | usage
+               | relationship_stmt
+               | comment_stmt
+
+?definition: part_def
+           | item_def
+           | port_def
+           | interface_def
+           | requirement_def
+           | constraint_def
+           | action_def
+           | state_def
+           | enumeration_def
+           | attribute_def
+
+?usage: part_usage
+      | item_usage
+      | port_usage
+      | interface_usage
+      | requirement_usage
+      | constraint_usage
+      | action_usage
+      | state_usage
+      | actor_usage
+      | usecase_usage
+
+
+// ---------------------------------------------------------------------------
+//  Package
+// ---------------------------------------------------------------------------
+
+package_decl: "package" IDENTIFIER "{" package_member* "}"
+
+
+// ---------------------------------------------------------------------------
+//  Definition bodies
+// ---------------------------------------------------------------------------
+
+?definition_body: specialization? "{" feature* "}" -> def_body
+                | specialization? ";"                  -> def_stub
+
+requirement_body: "{" requirement_feature* "}"
+
+// Requirement features: use explicit keyword-led syntax to avoid ambiguity.
+requirement_feature: "attribute" IDENTIFIER ":" type_ref ("=" expression)? ";"  -> req_attribute
+                   | "doc" ESCAPED_STRING ";"                                    -> req_doc
+                   | "id" ESCAPED_STRING ";"                                     -> req_id
+                   | "text" ESCAPED_STRING ";"                                   -> req_text_attr
+
+constraint_body: "(" [parameter_list] ")" "{" expression "}"  -> constraint_with_params
+               | "{" expression "}"                             -> constraint_bare
+
+
+// ---------------------------------------------------------------------------
+//  Definitions (keyword "def")
+// ---------------------------------------------------------------------------
+
+part_def:        "part"        "def" IDENTIFIER definition_body
+item_def:        "item"        "def" IDENTIFIER definition_body
+port_def:        "port"        "def" IDENTIFIER definition_body
+interface_def:   "interface"   "def" IDENTIFIER definition_body
+requirement_def: "requirement" "def" IDENTIFIER requirement_body
+constraint_def:  "constraint"  "def" IDENTIFIER constraint_body
+action_def:      "action"      "def" IDENTIFIER definition_body
+state_def:       "state"       "def" IDENTIFIER definition_body
+enumeration_def: "enumeration" "def" IDENTIFIER definition_body
+attribute_def:   "attribute"   "def" IDENTIFIER definition_body
+
+
+// ---------------------------------------------------------------------------
+//  Usage body disambiguation
+// ---------------------------------------------------------------------------
+
+?usage_body: ":" type_ref multiplicity? ";"   -> typed_usage
+           | "{" feature* "}"                  -> block_usage
+           | ";"                               -> stub_usage
+
+
+// ---------------------------------------------------------------------------
+//  Usages (keyword + name)
+// ---------------------------------------------------------------------------
+
+part_usage:        "part"        IDENTIFIER usage_body
+item_usage:        "item"        IDENTIFIER usage_body
+port_usage:        "port"        IDENTIFIER usage_body
+interface_usage:   "interface"   IDENTIFIER usage_body
+requirement_usage: "requirement" IDENTIFIER usage_body
+constraint_usage:  "constraint"  IDENTIFIER usage_body
+action_usage:      "action"      IDENTIFIER usage_body
+state_usage:       "state"       IDENTIFIER usage_body
+actor_usage:       "actor"       IDENTIFIER usage_body
+usecase_usage:     "use" "case"  IDENTIFIER usage_body
+
+
+// ---------------------------------------------------------------------------
+//  Features (inside definition/usage bodies)
+// ---------------------------------------------------------------------------
+
+?feature: attribute_feature
+        | port_feature
+        | ref_feature
+        | port_def
+        | attribute_def
+        | part_usage
+        | item_usage
+        | action_usage
+        | state_usage
+        | constraint_usage
+        | requirement_usage
+        | relationship_stmt
+        | comment_stmt
+
+// Typed attribute:  attribute name : Type [= expr] ;
+attribute_feature: "attribute" IDENTIFIER ":" type_ref multiplicity? ("=" expression)? ";"  -> typed_attribute
+// Simple attribute: attribute name [= expr] ;
+                 | "attribute" IDENTIFIER ("=" expression)? ";"                               -> simple_attribute
+
+// Port with optional direction (keyword in/out/inout is used)
+port_feature: "port" IDENTIFIER ":" type_ref ";"               -> port_feature_typed
+            | "port" IDENTIFIER ";"                              -> port_feature_bare
+            | "port" "in" IDENTIFIER ":" type_ref ";"           -> port_feature_in
+            | "port" "out" IDENTIFIER ":" type_ref ";"          -> port_feature_out
+            | "port" "inout" IDENTIFIER ":" type_ref ";"        -> port_feature_inout
+
+ref_feature: "ref" IDENTIFIER ":" type_ref ";"  -> ref_feature
+
+
+// ---------------------------------------------------------------------------
+//  Relationships
+// ---------------------------------------------------------------------------
+
+?relationship_stmt: connection_stmt
+                  | binding_stmt
+                  | flow_stmt
+                  | satisfy_stmt
+                  | verify_stmt
+                  | allocation_stmt
+                  | subclassification_stmt
+                  | transition_stmt
+
+connection_stmt: "connect" qualified_name "to" qualified_name ";"
+
+binding_stmt: "binding" IDENTIFIER "connect" qualified_name "to" qualified_name ";"
+            | "binding" "connect" qualified_name "to" qualified_name ";"  -> binding_stmt_anon
+
+flow_stmt: "flow" IDENTIFIER "from" qualified_name "to" qualified_name ";"
+         | "flow" "from" qualified_name "to" qualified_name ";"  -> flow_stmt_anon
+
+satisfy_stmt: "satisfy" qualified_name "to" qualified_name ";"
+
+verify_stmt: "verify" qualified_name "to" qualified_name ";"
+
+allocation_stmt: "allocate" qualified_name "to" qualified_name ";"
+
+subclassification_stmt: qualified_name ":>" qualified_name ";"
+
+transition_stmt: "transition" IDENTIFIER "from" qualified_name "to" qualified_name ";"
+                | "transition" "from" qualified_name "to" qualified_name ";"  -> transition_stmt_anon
+
+
+// ---------------------------------------------------------------------------
+//  Comment
+// ---------------------------------------------------------------------------
+// Two forms:  comment <name> "text" ;   or   comment "text" ;
+// IDENTIFIER vs ESCAPED_STRING disambiguates at LALR(1) level.
+
+comment_stmt: "comment" IDENTIFIER ESCAPED_STRING ";"  -> comment_with_name
+            | "comment" ESCAPED_STRING ";"               -> comment_anon
