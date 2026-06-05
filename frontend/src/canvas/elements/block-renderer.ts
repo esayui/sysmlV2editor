@@ -56,14 +56,14 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
 
     // -- «block» 构造型 (居中) --
     const stereoText = new Text('«block»', {
-      left: 0,
+      left: size.width / 2,
       top: 3,
       fontSize: 10,
       fontFamily: mergedStyle.fontFamily,
       fill: 'rgba(255,255,255,0.8)',
       fontStyle: 'italic',
       textAlign: 'center',
-      width: size.width,
+      originX: 'center',
     });
     this.setObjectData(stereoText, { role: 'stereotype' });
     children.push(stereoText);
@@ -71,13 +71,14 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
     // -- 名称 (居中，白色加粗，超宽时用 FabricText 换行) --
     const maxNameWidth = size.width * 0.8;
     const nameText = new FabricText(element.name, {
-      left: (size.width - maxNameWidth) / 2,
+      left: size.width / 2,
       top: 15,
       fontSize: mergedStyle.fontSize,
       fontFamily: mergedStyle.fontFamily,
       fill: '#FFFFFF',
       fontWeight: 'bold',
       textAlign: 'center',
+      originX: 'center',
       width: maxNameWidth,
     });
     this.setObjectData(nameText, { role: ChildRole.Name });

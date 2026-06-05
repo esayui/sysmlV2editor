@@ -77,6 +77,24 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     }
   }, [semanticModel.elements]);
 
+  // 获取元素类型的默认 properties
+  const getDefaultProperties = (elemType: string): Record<string, unknown> => {
+    switch (elemType) {
+      case 'PartDefinition': case 'ItemDefinition': case 'InterfaceDefinition':
+        return { isAbstract: false, superTypes: [], attributes: [], ports: [] };
+      case 'PartUsage': case 'ItemUsage': case 'PortUsage':
+        return { definitionRef: '' };
+      case 'PortDefinition':
+        return { direction: 'inout', type: '' };
+      case 'ConstraintDefinition': case 'ConstraintUsage':
+        return { parameters: [], expression: '' };
+      case 'RequirementDefinition': case 'StakeholderRequirement':
+        return { requirementId: '', text: '', category: 'functional', priority: 'medium' };
+      default:
+        return {};
+    }
+  };
+
   // 根据活跃视图确定新元素的归属
   const getParentElementId = (): string | null => {
     const activeDId = useStore.getState().activeDiagramId;
@@ -170,7 +188,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
         type: elementType,
         ownerId: getParentElementId(),
         description: '',
-        properties: {},
+        properties: getDefaultProperties(elementType),
       };
       addElement(newElement);
 
@@ -215,7 +233,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
       const newElement: SemanticElement = {
         id: elemId, name: elemType,
         qualifiedName: `${projectName}::${elemType}`,
-        type: elemType as ElementType, ownerId: parentElementId, description: '', properties: {},
+        type: elemType as ElementType, ownerId: parentElementId, description: '', properties: getDefaultProperties(elemType),
       };
       addElement(newElement);
       if (activeDId && globalRegistry && engineRef.current) {
@@ -279,7 +297,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
         type: elementType as ElementType,
         ownerId: parentElId,
         description: '',
-        properties: {},
+        properties: getDefaultProperties(elementType),
       };
       addElement(newElement);
 
