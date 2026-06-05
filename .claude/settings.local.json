@@ -25,7 +25,8 @@
       "Bash(curl *)",
       "Bash(powershell -Command \"Stop-Process -Id 24824 -Force\")",
       "Bash(node -e \"const f = require\\('fabric'\\); console.log\\('Fabric version:', f.version\\)\")",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(node -e \"const f = require\\('fabric'\\); console.log\\('FabricText:', typeof f.FabricText\\); console.log\\('Text:', typeof f.Text\\);\")"
     ]
   }
 }

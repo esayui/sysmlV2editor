@@ -3,7 +3,7 @@
 // 外观: 顶部名称栏(深色) + 属性分隔线 + 属性列表 + 端口指示
 // ===========================================================================
 
-import { Rect, Text, Group, FabricObject, Line } from 'fabric';
+import { Rect, Text, Group, FabricObject, Line, FabricText } from 'fabric';
 import type { SemanticElement } from '@/types/semantic-model';
 import type { PartDefProperties, PortRef, AttributeDef } from '@/types/semantic-model';
 import type { NodeStyle } from '@/types/canvas-model';
@@ -54,33 +54,46 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
     this.setObjectData(sepLine, { role: 'separator' });
     children.push(sepLine);
 
-    // -- 名称 (白色加粗，居中于头部) --
-    const nameText = new Text(element.name, {
-      left: PADDING,
-      top: (HEADER_HEIGHT - mergedStyle.fontSize) / 2,
-      fontSize: mergedStyle.fontSize,
-      fontFamily: mergedStyle.fontFamily,
-      fill: '#FFFFFF',
-      fontWeight: 'bold',
-    });
-    this.setObjectData(nameText, { role: ChildRole.Name });
-    children.push(nameText);
-
-    // -- «block» 构造型 --
+    // -- «block» 构造型 (居中) --
     const stereoText = new Text('«block»', {
-      left: size.width - 60,
-      top: 4,
-      fontSize: 9,
+      left: 0,
+      top: 3,
+      fontSize: 10,
       fontFamily: mergedStyle.fontFamily,
-      fill: 'rgba(255,255,255,0.7)',
+      fill: 'rgba(255,255,255,0.8)',
       fontStyle: 'italic',
+      textAlign: 'center',
+      width: size.width,
     });
     this.setObjectData(stereoText, { role: 'stereotype' });
     children.push(stereoText);
 
+    // -- 名称 (居中，白色加粗，超宽时用 FabricText 换行) --
+    const maxNameWidth = size.width * 0.8;
+    const nameText = new FabricText(element.name, {
+      left: (size.width - maxNameWidth) / 2,
+      top: 15,
+      fontSize: mergedStyle.fontSize,
+      fontFamily: mergedStyle.fontFamily,
+      fill: '#FFFFFF',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      width: maxNameWidth,
+    });
+    this.setObjectData(nameText, { role: ChildRole.Name });
+    children.push(nameText);
+
+    // 根据实际文本高度动态调整布局
+    const actualNameHeight = (nameText as unknown as { height?: number }).height ?? mergedStyle.fontSize + 4;
+    const headerActualHeight = Math.max(HEADER_HEIGHT, 15 + actualNameHeight + 6);
+    header.set({ height: headerActualHeight });
+    sepLine.set({ y2: headerActualHeight, top: 0, left: 0, x1: 0, y1: headerActualHeight, x2: size.width });
+    const totalH = headerActualHeight + 6 + (props.attributes ?? []).length * ATTRIBUTE_ROW_HEIGHT + PADDING;
+    bg.set({ height: Math.max(totalH, BLOCK_MIN_HEIGHT) });
+
     // -- 属性列表 --
     const attrs = props.attributes ?? [];
-    let attrY = HEADER_HEIGHT + 6;
+    let attrY = headerActualHeight + 6;
     for (let i = 0; i < attrs.length; i++) {
       const label = this.formatAttribute(attrs[i]);
       const attrText = new Text(label, {
@@ -109,11 +122,26 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
 
   update(fObj: FabricObject, element: SemanticElement, style?: NodeStyle): void {
     const mergedStyle = this.mergeStyle(style);
-    const children = (fObj as Group).getObjects();
+    const group = fObj as Group;
+    const children = group.getObjects();
     const nameObj = children.find((c) => this.getObjectData(c)?.role === ChildRole.Name) as Text | undefined;
-    if (nameObj) nameObj.set({ text: element.name });
-    this.applyStyle(fObj, mergedStyle);
-    fObj.setCoords();
+    if (nameObj) {
+      const bw = group.width;
+      const maxW = bw * 0.8;
+      nameObj.set({ text: element.name, width: maxW, left: (bw - maxW) / 2 });
+    }
+    // Update stereotype if element type changed
+    const stereoObj = children.find((c) => this.getObjectData(c)?.role === 'stereotype') as Text | undefined;
+    if (stereoObj) {
+      const stereotypeMap: Record<string, string> = {
+        PartDefinition: '«block»', ItemDefinition: '«item»',
+        InterfaceDefinition: '«interface»', AttributeDefinition: '«attribute»',
+        EnumerationDefinition: '«enumeration»',
+      };
+      stereoObj.set({ text: stereotypeMap[element.type] ?? '«block»' });
+    }
+    this.applyStyle(group, mergedStyle);
+    group.setCoords();
   }
 
   getPortAnchors(fObj: FabricObject): PortAnchor[] {
@@ -135,13 +163,16 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
   calculateSize(element: SemanticElement): { width: number; height: number } {
     const props = element.properties as Partial<PartDefProperties>;
     const attrs = props.attributes ?? [];
-    const nameW = this.estimateTextWidth(element.name, 14) + PADDING * 2 + 60;
+    // 名称可能换行，预估更宽的宽度
+    const nameW = Math.min(this.estimateTextWidth(element.name, 14), 400) + PADDING * 2 + 20;
     let maxAttrW = 0;
     for (const a of attrs) {
       maxAttrW = Math.max(maxAttrW, this.estimateTextWidth(this.formatAttribute(a), 13) + PADDING * 3);
     }
     const w = Math.max(BLOCK_MIN_WIDTH, nameW, maxAttrW);
-    const h = HEADER_HEIGHT + 6 + attrs.length * ATTRIBUTE_ROW_HEIGHT + PADDING;
+    // 头部高度: 构造型行 + 名称行 + padding
+    const estHeaderH = HEADER_HEIGHT + (element.name.length > 20 ? 18 : 0);
+    const h = estHeaderH + 6 + attrs.length * ATTRIBUTE_ROW_HEIGHT + PADDING;
     return { width: w, height: Math.max(h, BLOCK_MIN_HEIGHT) };
   }
 
