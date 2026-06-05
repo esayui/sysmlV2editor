@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ConfigProvider } from 'antd';
-import { Rect } from 'fabric';
 import zhCN from 'antd/locale/zh_CN';
 import { healthCheck } from './api/client';
 import ProjectPage from './components/ProjectPage';
@@ -128,18 +127,6 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
   useEffect(() => {
     if (!engine || interactionRef.current) return;
     registerAllRenderers(engine);
-
-    // 测试: 在画布可见区域放置一个矩形，验证渲染工作
-    try {
-      const testRect = new Rect({
-        left: 200, top: 200, width: 200, height: 120,
-        fill: '#E3F2FD', stroke: '#1565C0', strokeWidth: 2,
-        rx: 8, ry: 8,
-      });
-      engine.addObject(testRect);
-      console.log('[canvas] Test rectangle added at (200,200)');
-    } catch (e) { console.error('[canvas] Test rect error:', e); }
-
     const handler = new InteractionHandler(engine);
     handler.initialize();
     interactionRef.current = handler;
