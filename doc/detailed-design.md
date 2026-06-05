@@ -1,9 +1,9 @@
 # SysML v2 图形化建模软件 —— 详细设计文档
 
-> **文档版本**: v1.0
-> **日期**: 2026-06-05
-> **基于需求版本**: proposal.md v1.0
-> **设计范围**: V1 MVP（单用户本地建模）
+> **文档版本**: v1.1
+> **日期**: 2026-06-05 (更新)
+> **基于需求版本**: proposal.md v1.1
+> **设计范围**: V1 MVP（单用户本地建模）— 已完成开发
 
 ---
 
@@ -2374,5 +2374,146 @@ Response 200:
 
 ---
 
-> **文档状态**: 待评审
-> **下一步**: 基于本详细设计进行 V1 开发任务拆分（创建 GitHub Issues / 开发计划表）
+> **文档状态**: 已更新 (V1 开发完成)
+> **下一步**: V1 MVP 开发完成，进入测试优化阶段
+
+---
+
+## 9. V1 开发实现附录
+
+> 本章记录 V1 开发过程中的关键实现决策、架构调整和新增模块。
+
+### 9.1 工程管理系统
+
+```
+backend/app/services/project_registry.py   # SQLite 工程注册表
+backend/data/projects.db                   # 持久化数据库
+GET  /api/v1/project/list                  # 列出所有工程（含路径校验）
+POST /api/v1/project/register              # 注册工程
+POST /api/v1/project/delete                # 删除工程记录
+POST /api/v1/project/rename                # 重命名工程
+```
+
+- 创建/打开工程时自动注册到 SQLite
+- 刷新列表时检查路径存在性，自动清除无效记录
+
+### 9.2 图形渲染引擎
+
+**技术选型变更**: PixiJS → Fabric.js v6
+
+**Fabric.js v6 适配要点**:
+- Canvas 元素通过 JSX `<canvas ref={canvasRef}>` 直接渲染，避免动态创建 DOM 冲突
+- Group 设置 `originX: 'left', originY: 'top'` 使子元素坐标基于左上角
+- `enableRetinaScaling: true` 提升高清屏渲染质量
+- Canvas 尺寸从父容器 `getBoundingClientRect()` 获取，匹配实际可视区域
+
+**BlockRenderer（SysML 标准块）**:
+```
+┌────────────────────────┐
+│     «block»            │  ← 构造型居中
+│     Vehicle            │  ← 名称居中加粗 (FabricText)
+├────────────────────────┤  ← 分隔线
+│  mass: Real            │  ← 属性列表
+│  ─────────────────     │
+│  ■ ■ ■                │  ← 端口指示
+└────────────────────────┘
+```
+- 头部深色背景（`fillColor - 8%`）
+- 名称使用 FabricText 支持超宽自动换行
+- 属性类型下拉框：Real / Integer / String / Boolean / Complex
+- 端口坐标基于 Group 左上角正值
+
+### 9.3 端口系统
+
+端口作为独立 FabricObject 存在于画布，通过 `data.parentBlockId` 追踪父子关系：
+
+```
+创建时: snapPortToBlock() → 最近边框中点吸附 (<50px)
+移动时: object:modified → 二遍扫描 → 更新附着端口到新边框位置
+限制: 仅可在块边框创建，空白区域/块内部不可创建
+```
+
+### 9.4 双向同步机制
+
+```
+Store (Zustand)
+  ├── semanticModel  ←→  useEffect 监听变更 → renderer.update() → Canvas
+  ├── canvasModel    ←→  useEffect 监听样式 → renderer.update() → Canvas
+  ├── interactionMode ←→ InteractionHandler.setMode()
+  └── selectedElementIds ← element:click → selectElements()
+                             ↑
+                        ModelTreePanel.handleSelect()
+```
+
+- 元素属性变更：深度比较 JSON snapshot → 删除旧对象 + 完全重渲染
+- 样式变更：比较 NodeStyle JSON → `renderer.update()` 更新背景色/描边
+- 名称稳定性：`update()` 不改变 `left`/`originX`，仅更新文本内容
+- 选中同步：`element:click` Intent → `selectElements()` → 树高亮 + 属性面板
+
+### 9.5 视图管理系统
+
+**9 种 SysML 视图**（v1.6 中文名 → v2 内部类型）:
+
+| 视图 | DiagramType | 工具箱过滤 |
+|------|-------------|-----------|
+| 块定义图 (BDD) | BDD | PartDef, PortDef, InterfaceDef, Package, Connection, Comment |
+| 内部块图 (IBD) | IBD | PartUsage, PortUsage, Connection, Comment |
+| 包图 (PKG) | PKG | Package, Comment |
+| 参数图 (PAR) | PAR | ConstraintDef, Binding, Comment |
+| 需求图 (REQ) | REQ | RequirementDef, StakeholderReq, Satisfy, Verify, Comment |
+| 活动图 (ACT) | ACT | ActionDef, Connection, ObjectFlow, Comment |
+| 状态机图 (STM) | STM | StateDef, Connection, Comment |
+| 序列图 (SD) | SD | Comment |
+| 用例图 (UC) | UC | UseCase, Actor, Connection, Comment |
+
+Diagram 类型扩展: `DiagramType = 'BDD' | 'IBD' | 'PKG' | 'ACT' | 'STM' | 'SD' | 'UC' | 'REQ' | 'PAR'`
+
+Diagram 接口新增: `isOpen?: boolean`（关闭 Tab 不删除视图）
+
+### 9.6 模型树右键菜单（中文）
+
+```
+重命名
+新建子元素 → 包/部件定义/部件实例/端口定义/端口实例/属性/需求/约束/动作/状态/注释
+新建视图 → BDD/IBD/PKG/PAR/REQ/ACT/STM/SD/UC
+添加满足关系 (Requirement 专属)
+在图定位
+删除
+```
+
+### 9.7 数据流补充
+
+**click-to-place 流程**:
+```
+ToolboxPanel 点击 "部件定义"
+  → Store.setActiveToolboxElementType('PartDefinition')
+  → Store.setInteractionMode('create-block')
+
+用户点击画布空白处
+  → InteractionHandler 分发 canvas:click Intent
+  → App.tsx clickCallback:
+      1. 读取 activeToolboxElementType
+      2. 创建 SemanticElement (ownerId = 活跃视图的父元素)
+      3. globalRegistry.createCanvasObject() → FabricObject
+      4. engine.addObject() → Canvas 渲染
+      5. addNodeToDiagram() → Store 记录
+```
+
+**端口创建流程**:
+```
+用户点击 "端口定义" + 点击块边框附近
+  → snapPortToBlock(pos) → 找最近块边框中点
+  → 吸附成功: 创建端口 + data.parentBlockId = 父块 ID
+  → 吸附失败 (<50px 内无块): 取消创建
+
+块被拖动:
+  → object:modified 事件
+  → 二遍扫描: 更新块内部 + 移动附着端口到新边框
+```
+
+### 9.8 测试状态
+
+| 层 | 框架 | 测试数 | 覆盖率 |
+|------|------|:------:|:------:|
+| 前端 | Vitest | 542/547 | ~90% |
+| 后端 | pytest | 453/453 | ~90% |
