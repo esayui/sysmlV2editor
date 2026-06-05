@@ -165,17 +165,15 @@ export class CanvasEngine implements ICanvasEngine {
 
     this.config = { ...config };
 
-    const w = config.width;
-    const h = config.height;
-    console.log(`[CanvasEngine] Initializing canvas ${w}x${h}, container:`, container.clientWidth, 'x', container.clientHeight);
+    // Use container's actual size, falling back to config defaults
+    const w = container.clientWidth || config.width;
+    const h = container.clientHeight || config.height;
 
-    // 创建 canvas 元素
     const canvasEl = document.createElement('canvas');
     canvasEl.width = w;
     canvasEl.height = h;
+    canvasEl.style.display = 'block';
     container.appendChild(canvasEl);
-
-    // 确保容器可以看到 canvas
     container.style.overflow = 'hidden';
 
     this.canvas = new Canvas(canvasEl, {
@@ -188,7 +186,6 @@ export class CanvasEngine implements ICanvasEngine {
       stopContextMenu: true,
       fireMiddleClick: true,
     });
-    console.log('[CanvasEngine] Fabric Canvas created, element:', canvasEl.width, 'x', canvasEl.height);
 
     this.snapToGridEnabled = config.snapToGrid;
     this.registerFabricEvents();
