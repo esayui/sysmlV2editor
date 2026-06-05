@@ -139,7 +139,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
   ): { snappedPos: { x: number; y: number }; parentBlockId: string | null } => {
     if (!engineRef.current) return { snappedPos: portPos, parentBlockId: null };
     const fabricObjs = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[] } }).canvas?.getObjects() ?? [];
-    let bestDist = 30; // 最大吸附距离
+    let bestDist = 50; // 最大吸附距离(px)
     let bestPos = portPos;
     let bestParent: string | null = null;
     for (const obj of fabricObjs) {
@@ -325,11 +325,14 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
       };
       addElement(newElement);
 
-      // 端口吸附到最近的块边框
+      // 端口只能吸附到块边框（不允许画布空白处创建）
       let finalPos = pos;
       let parentBlockId: string | null = null;
       if (elemType === 'PortDefinition' || elemType === 'PortUsage') {
         const snapped = snapPortToBlock(pos, 12, 12);
+        if (!snapped.parentBlockId) {
+          return; // 不在任何块边框附近，取消创建
+        }
         finalPos = snapped.snappedPos;
         parentBlockId = snapped.parentBlockId;
         if (parentBlockId) {

@@ -122,6 +122,8 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
     }
 
     const group = this.createStyledGroup(children, element, mergedStyle, size.width, size.height);
+    // 存储原始宽度，供 update() 使用（避免 v6 setCoords 重算导致偏移）
+    this.setObjectData(group, { ...this.getObjectData(group), blockWidth: size.width });
     return group;
   }
 
@@ -129,12 +131,13 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
     const mergedStyle = this.mergeStyle(style);
     const group = fObj as Group;
     const children = group.getObjects();
-    // 使用存储的尺寸而非 group.width（v6 会重算导致偏移）
-    const bg = children.find((c) => this.getObjectData(c)?.role === ChildRole.Background) as Rect | undefined;
-    const bw = (bg?.width as number) || BLOCK_MIN_WIDTH;
+    // 使用 Group data 中存储的原始宽度（v6 setCoords 会改变 group.width）
+    const storedW = (this.getObjectData(group) as Record<string, unknown> | undefined)?.blockWidth as number;
+    const bw = storedW || (group as unknown as { width?: number }).width || BLOCK_MIN_WIDTH;
     const maxW = bw * 0.8;
 
     // 重设背景样式
+    const bg = children.find((c) => this.getObjectData(c)?.role === ChildRole.Background) as Rect | undefined;
     if (bg) {
       bg.set({
         fill: mergedStyle.fillColor,
@@ -143,19 +146,16 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
       });
     }
 
+    // 名称和构造型——只更新文本，不改变位置
     const nameObj = children.find((c) => this.getObjectData(c)?.role === ChildRole.Name) as Text | undefined;
     if (nameObj) {
-      nameObj.set({
-        text: element.name, width: maxW, left: bw / 2, originX: 'center',
-      });
+      nameObj.set({ text: element.name, width: maxW });
     }
 
     const stereoObj = children.find((c) => this.getObjectData(c)?.role === 'stereotype') as Text | undefined;
     if (stereoObj) {
-      stereoObj.set({ left: bw / 2, originX: 'center' });
+      // 保持原位置不变，只更新文本
     }
-
-    // 不调用 group.setCoords() — v6 会重算尺寸导致偏移
   }
 
   getPortAnchors(fObj: FabricObject): PortAnchor[] {
