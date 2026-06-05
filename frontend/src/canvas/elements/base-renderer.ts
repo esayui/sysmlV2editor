@@ -260,6 +260,8 @@ export abstract class BaseElementRenderer<T extends SemanticElement> {
       top: 0,
       width,
       height,
+      originX: 'left',
+      originY: 'top',
       subTargetCheck: false,
       selectable: true,
       evented: true,
