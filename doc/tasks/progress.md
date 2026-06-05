@@ -26,15 +26,15 @@
 | 编号 | 模块 | 状态 | 子任务 | 完成 | 依赖 | 开始日期 | 完成日期 |
 |------|------|:----:|:------:|:----:|------|----------|----------|
 | M-FE-01 | [Canvas Engine](M-FE-01-canvas-engine.md) | ✅ 已完成 | 20 | 20 | SH-01 | 2026-06-05 | 2026-06-05 |
-| M-FE-02 | [Element Renderers](M-FE-02-element-renderers.md) | ⬜ 未开始 | 18 | 0 | FE-01, FE-08 | — | — |
+| M-FE-02 | [Element Renderers](M-FE-02-element-renderers.md) | ✅ 已完成 | 18 | 18 | FE-01, FE-08 | 2026-06-05 | 2026-06-05 |
 | M-FE-03 | [Connection Manager](M-FE-03-connection-manager.md) | ⬜ 未开始 | 14 | 0 | FE-01, FE-02 | — | — |
-| M-FE-04 | [Interaction Handler](M-FE-04-interaction-handler.md) | ⬜ 未开始 | 17 | 0 | FE-01, FE-08 | — | — |
+| M-FE-04 | [Interaction Handler](M-FE-04-interaction-handler.md) | ✅ 已完成 | 17 | 17 | FE-01, FE-08 | 2026-06-05 | 2026-06-05 |
 | M-FE-05 | [Toolbox Panel](M-FE-05-toolbox-panel.md) | ⬜ 未开始 | 14 | 0 | FE-01, FE-04, FE-08 | — | — |
 | M-FE-06 | [Properties Panel](M-FE-06-properties-panel.md) | ⬜ 未开始 | 17 | 0 | FE-01, FE-02, FE-08 | — | — |
 | M-FE-07 | [Model Tree Panel](M-FE-07-model-tree-panel.md) | ⬜ 未开始 | 17 | 0 | FE-08 | — | — |
 | M-FE-08 | [State Store](M-FE-08-state-store.md) | ✅ 已完成 | 20 | 20 | 2026-06-05 | 2026-06-05 |
 | M-FE-09 | [API Client](M-FE-09-api-client.md) | ✅ 已完成 | 16 | 16 | SH-01 | 2026-06-05 | 2026-06-05 |
-| M-FE-10 | [Undo/Redo Engine](M-FE-10-undo-redo-engine.md) | ⬜ 未开始 | 18 | 0 | FE-08 | — | — |
+| M-FE-10 | [Undo/Redo Engine](M-FE-10-undo-redo-engine.md) | ✅ 已完成 | 18 | 18 | FE-08 | 2026-06-05 | 2026-06-05 |
 
 ---
 
