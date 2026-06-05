@@ -317,6 +317,23 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     };
     handler.onIntent('element:click', selectCallback);
 
+    // object:modified → 更新端口位置（端口在 Group 内时需要重算）
+    engine.on('object:modified', () => {
+      const fabricObjs = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[]; requestRenderAll: () => void } }).canvas?.getObjects() ?? [];
+      for (const obj of fabricObjs) {
+        const data = (obj as { data?: { id?: string; type?: string } }).data;
+        if (data?.type !== 'element') continue;
+        try {
+          const el = semanticModel.elements.find((e) => e.id === data.id);
+          if (el) {
+            const renderer = globalRegistry.get(el.type);
+            renderer.update(obj, el);
+          }
+        } catch { /* pass */ }
+      }
+      (engineRef.current as unknown as { canvas: { requestRenderAll: () => void } }).canvas?.requestRenderAll();
+    });
+
     return () => {
       if (dropCallbackRef.current) handler.offIntent('drop:from-toolbox', dropCallbackRef.current);
       handler.offIntent('canvas:click', clickCallback);
