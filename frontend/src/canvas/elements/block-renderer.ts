@@ -129,31 +129,33 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
     const mergedStyle = this.mergeStyle(style);
     const group = fObj as Group;
     const children = group.getObjects();
-    const bw = group.width! || BLOCK_MIN_WIDTH;
+    // 使用存储的尺寸而非 group.width（v6 会重算导致偏移）
+    const bg = children.find((c) => this.getObjectData(c)?.role === ChildRole.Background) as Rect | undefined;
+    const bw = (bg?.width as number) || BLOCK_MIN_WIDTH;
     const maxW = bw * 0.8;
+
+    // 重设背景样式
+    if (bg) {
+      bg.set({
+        fill: mergedStyle.fillColor,
+        stroke: mergedStyle.strokeColor,
+        strokeWidth: mergedStyle.strokeWidth,
+      });
+    }
 
     const nameObj = children.find((c) => this.getObjectData(c)?.role === ChildRole.Name) as Text | undefined;
     if (nameObj) {
       nameObj.set({
-        text: element.name,
-        width: maxW,
-        left: bw / 2,
-        originX: 'center',
+        text: element.name, width: maxW, left: bw / 2, originX: 'center',
       });
     }
 
     const stereoObj = children.find((c) => this.getObjectData(c)?.role === 'stereotype') as Text | undefined;
     if (stereoObj) {
-      const stereotypeMap: Record<string, string> = {
-        PartDefinition: '«block»', ItemDefinition: '«item»',
-        InterfaceDefinition: '«interface»', AttributeDefinition: '«attribute»',
-        EnumerationDefinition: '«enumeration»',
-      };
-      stereoObj.set({ text: stereotypeMap[element.type] ?? '«block»', left: bw / 2, originX: 'center' });
+      stereoObj.set({ left: bw / 2, originX: 'center' });
     }
 
-    this.applyStyle(group, mergedStyle);
-    group.setCoords();
+    // 不调用 group.setCoords() — v6 会重算尺寸导致偏移
   }
 
   getPortAnchors(fObj: FabricObject): PortAnchor[] {

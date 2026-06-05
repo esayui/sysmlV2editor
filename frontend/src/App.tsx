@@ -131,6 +131,40 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     }
   }, [canvasModel.diagrams]);
 
+  // ---- 端口吸附辅助 ----
+  const snapPortToBlock = (
+    portPos: { x: number; y: number },
+    portWidth: number,
+    portHeight: number,
+  ): { snappedPos: { x: number; y: number }; parentBlockId: string | null } => {
+    if (!engineRef.current) return { snappedPos: portPos, parentBlockId: null };
+    const fabricObjs = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[] } }).canvas?.getObjects() ?? [];
+    let bestDist = 30; // 最大吸附距离
+    let bestPos = portPos;
+    let bestParent: string | null = null;
+    for (const obj of fabricObjs) {
+      const data = (obj as { data?: { id?: string; type?: string } }).data;
+      if (data?.type !== 'element') continue;
+      const rect = obj.getBoundingRect();
+      // 四条边中点
+      const midpoints = [
+        { x: rect.left + rect.width / 2, y: rect.top, edge: 'top' as const },
+        { x: rect.left + rect.width / 2, y: rect.top + rect.height, edge: 'bottom' as const },
+        { x: rect.left, y: rect.top + rect.height / 2, edge: 'left' as const },
+        { x: rect.left + rect.width, y: rect.top + rect.height / 2, edge: 'right' as const },
+      ];
+      for (const mp of midpoints) {
+        const dist = Math.hypot(portPos.x - mp.x, portPos.y - mp.y);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestPos = { x: mp.x - portWidth / 2, y: mp.y - portHeight / 2 };
+          bestParent = data.id ?? null;
+        }
+      }
+    }
+    return { snappedPos: bestPos, parentBlockId: bestParent };
+  };
+
   // 获取元素类型的默认 properties
   const getDefaultProperties = (elemType: string): Record<string, unknown> => {
     switch (elemType) {
@@ -290,10 +324,30 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
         type: elemType as ElementType, ownerId: parentElementId, description: '', properties: getDefaultProperties(elemType),
       };
       addElement(newElement);
+
+      // 端口吸附到最近的块边框
+      let finalPos = pos;
+      let parentBlockId: string | null = null;
+      if (elemType === 'PortDefinition' || elemType === 'PortUsage') {
+        const snapped = snapPortToBlock(pos, 12, 12);
+        finalPos = snapped.snappedPos;
+        parentBlockId = snapped.parentBlockId;
+        if (parentBlockId) {
+          newElement.ownerId = parentBlockId;
+        }
+      }
+
       if (activeDId && globalRegistry && engineRef.current) {
         try {
-          const fObj = globalRegistry.createCanvasObject(newElement, pos);
+          const fObj = globalRegistry.createCanvasObject(newElement, finalPos);
           if (fObj) {
+            // 存储父块 ID 以便后续移动时更新
+            if (parentBlockId) {
+              (fObj as { data?: Record<string, unknown> }).data = {
+                ...((fObj as { data?: Record<string, unknown> }).data || {}),
+                parentBlockId,
+              };
+            }
             const node: DiagramNode = {
               id: `canvas_node:${elemId}`, semanticElementId: elemId,
               x: pos.x, y: pos.y, width: fObj.width ?? 160, height: fObj.height ?? 80,
@@ -317,10 +371,12 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     };
     handler.onIntent('element:click', selectCallback);
 
-    // object:modified → 更新端口位置（端口在 Group 内时需要重算）
+    // object:modified → 更新内部布局 + 移动附着端口
     engine.on('object:modified', () => {
-      const fabricObjs = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[]; requestRenderAll: () => void } }).canvas?.getObjects() ?? [];
-      for (const obj of fabricObjs) {
+      const allObjs = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[]; requestRenderAll: () => void } }).canvas?.getObjects() ?? [];
+      const movedBlocks = new Map<string, { left: number; top: number; width: number; height: number }>();
+      // 第一遍：更新 blocks 内部布局
+      for (const obj of allObjs) {
         const data = (obj as { data?: { id?: string; type?: string } }).data;
         if (data?.type !== 'element') continue;
         try {
@@ -328,8 +384,31 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
           if (el) {
             const renderer = globalRegistry.get(el.type);
             renderer.update(obj, el);
+            const r = obj.getBoundingRect();
+            movedBlocks.set(data.id!, { left: r.left, top: r.top, width: r.width, height: r.height });
           }
         } catch { /* pass */ }
+      }
+      // 第二遍：移动附着端口
+      for (const obj of allObjs) {
+        const data = (obj as { data?: { id?: string; type?: string; parentBlockId?: string } }).data;
+        if (!data?.parentBlockId) continue;
+        const block = movedBlocks.get(data.parentBlockId);
+        if (!block) continue;
+        const portW = obj.width || 12, portH = obj.height || 12;
+        const midpoints = [
+          { x: block.left + block.width / 2 - portW / 2, y: block.top - portH / 2 },
+          { x: block.left + block.width / 2 - portW / 2, y: block.top + block.height - portH / 2 },
+          { x: block.left - portW / 2, y: block.top + block.height / 2 - portH / 2 },
+          { x: block.left + block.width - portW / 2, y: block.top + block.height / 2 - portH / 2 },
+        ];
+        let best = midpoints[0], bestDist = Infinity;
+        for (const mp of midpoints) {
+          const d = Math.hypot((obj.left || 0) - mp.x, (obj.top || 0) - mp.y);
+          if (d < bestDist) { bestDist = d; best = mp; }
+        }
+        obj.set({ left: best.x, top: best.y });
+        obj.setCoords();
       }
       (engineRef.current as unknown as { canvas: { requestRenderAll: () => void } }).canvas?.requestRenderAll();
     });
