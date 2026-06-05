@@ -92,11 +92,15 @@ export class BlockRenderer extends BaseElementRenderer<SemanticElement> {
     const totalH = headerActualHeight + 6 + (props.attributes ?? []).length * ATTRIBUTE_ROW_HEIGHT + PADDING;
     bg.set({ height: Math.max(totalH, BLOCK_MIN_HEIGHT) });
 
-    // -- 属性列表 --
+    // -- 属性列表 (至少保留空行指示属性区域) --
     const attrs = props.attributes ?? [];
     let attrY = headerActualHeight + 6;
-    for (let i = 0; i < attrs.length; i++) {
-      const label = this.formatAttribute(attrs[i]);
+    // 即使没有属性也保留最小区域
+    const effectiveAttrs = attrs.length > 0 ? attrs : [{ name: '', type: '', multiplicity: '' }] as AttributeDef[];
+    for (let i = 0; i < effectiveAttrs.length; i++) {
+      const attr = effectiveAttrs[i];
+      const isEmpty = !attr.name && !attr.type;
+      const label = isEmpty ? ' ' : this.formatAttribute(attr);
       const attrText = new Text(label, {
         left: PADDING + 4,
         top: attrY,
