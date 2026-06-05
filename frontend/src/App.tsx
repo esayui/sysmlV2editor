@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ConfigProvider } from 'antd';
+import type { FabricObject } from 'fabric';
 import zhCN from 'antd/locale/zh_CN';
 import { healthCheck } from './api/client';
 import ProjectPage from './components/ProjectPage';
@@ -50,6 +51,31 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     BDD: '块定义图', IBD: '内部块图', PKG: '包图', PAR: '参数图',
     REQ: '需求图', ACT: '活动图', STM: '状态机图', SD: '序列图', UC: '用例图',
   };
+
+  // ---- 监听元素名称变更 → 同步画布标签 ----
+  const prevElementsRef = useRef<Map<string, string>>(new Map());
+  useEffect(() => {
+    if (!engineRef.current) return;
+    const prev = prevElementsRef.current;
+    for (const el of semanticModel.elements) {
+      const oldName = prev.get(el.id);
+      if (oldName !== undefined && oldName !== el.name) {
+        // 名称变化 → 更新画布
+        const fabricObjs = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[] } }).canvas?.getObjects() ?? [];
+        for (const obj of fabricObjs) {
+          if ((obj as { data?: { id?: string } }).data?.id === el.id) {
+            try {
+              const renderer = globalRegistry.get(el.type);
+              renderer.update(obj, el);
+              (engineRef.current as unknown as { canvas: { requestRenderAll: () => void } }).canvas?.requestRenderAll();
+            } catch { /* pass */ }
+            break;
+          }
+        }
+      }
+      prev.set(el.id, el.name);
+    }
+  }, [semanticModel.elements]);
 
   // 根据活跃视图确定新元素的归属
   const getParentElementId = (): string | null => {
