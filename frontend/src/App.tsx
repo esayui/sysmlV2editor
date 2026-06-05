@@ -51,6 +51,14 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     REQ: '需求图', ACT: '活动图', STM: '状态机图', SD: '序列图', UC: '用例图',
   };
 
+  // 根据活跃视图确定新元素的归属
+  const getParentElementId = (): string | null => {
+    const activeDId = useStore.getState().activeDiagramId;
+    if (!activeDId) return null;
+    const diagrams = useStore.getState().canvasModel.diagrams;
+    return diagrams.find((d) => d.id === activeDId)?.ownerElementId ?? null;
+  };
+
   // 当删除元素时清理其拥有的视图；当活跃视图被删除时切换到其他视图
   useEffect(() => {
     const existingElIds = new Set(semanticModel.elements.map((e) => e.id));
@@ -134,7 +142,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
         name: elementType,
         qualifiedName: `${projectName}::${elementType}`,
         type: elementType,
-        ownerId: null,
+        ownerId: getParentElementId(),
         description: '',
         properties: {},
       };
@@ -148,29 +156,16 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
             const node: DiagramNode = {
               id: `canvas_node:${elemId}`,
               semanticElementId: elemId,
-              x: pos.x,
-              y: pos.y,
-              width: fObj.width ?? 160,
-              height: fObj.height ?? 80,
-              style: {
-                fillColor: '#FFFFFF',
-                strokeColor: '#333333',
-                strokeWidth: 2,
-                fontSize: 14,
-                fontFamily: 'sans-serif',
-                fontColor: '#333333',
-                opacity: 1,
-                borderRadius: 8,
-                showShadow: false,
-              },
-              collapsed: false,
-              zIndex: 0,
-              locked: false,
+              x: pos.x, y: pos.y,
+              width: fObj.width ?? 160, height: fObj.height ?? 80,
+              style: { fillColor: '#FFFFFF', strokeColor: '#333333', strokeWidth: 2, fontSize: 14, fontFamily: 'sans-serif', fontColor: '#333333', opacity: 1, borderRadius: 8, showShadow: false },
+              collapsed: false, zIndex: 0, locked: false,
             };
             addNodeToDiagram(activeDiagramId, node);
             engine.addObject(fObj);
+            console.log('[drop] Created', elementType, 'at', pos);
           }
-        } catch { /* ignore */ }
+        } catch (err) { console.error('[drop] render error:', err); }
       }
     };
 
@@ -184,14 +179,19 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
       const pos = payload.scenePoint || payload.viewportPoint;
       if (!pos) return;
 
+      // 获取活跃视图的所属元素 ID，新建元素放在该元素下
+      const activeDId = useStore.getState().activeDiagramId;
+      const diagrams = useStore.getState().canvasModel.diagrams;
+      const activeDiag = diagrams.find((d) => d.id === activeDId);
+      const parentElementId = activeDiag?.ownerElementId ?? null;
+
       const elemId = genId();
       const newElement: SemanticElement = {
         id: elemId, name: elemType,
         qualifiedName: `${projectName}::${elemType}`,
-        type: elemType as ElementType, ownerId: null, description: '', properties: {},
+        type: elemType as ElementType, ownerId: parentElementId, description: '', properties: {},
       };
       addElement(newElement);
-      const activeDId = useStore.getState().activeDiagramId;
       if (activeDId && globalRegistry && engineRef.current) {
         try {
           const fObj = globalRegistry.createCanvasObject(newElement, pos);
@@ -204,8 +204,9 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
             };
             addNodeToDiagram(activeDId, node);
             engineRef.current.addObject(fObj);
+            console.log('[canvas:click] Created', elemType, 'at', pos, 'owner:', parentElementId);
           }
-        } catch { /* ignore */ }
+        } catch (err) { console.error('[canvas:click] render error:', err); }
       }
     };
     handler.onIntent('canvas:click', clickCallback);
@@ -234,13 +235,14 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
       if (!rect) return;
       const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
 
+      const parentElId = getParentElementId();
       const elemId = genId();
       const newElement: SemanticElement = {
         id: elemId,
         name: elementType,
         qualifiedName: `${projectName}::${elementType}`,
         type: elementType as ElementType,
-        ownerId: null,
+        ownerId: parentElId,
         description: '',
         properties: {},
       };
@@ -254,29 +256,16 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
             const node: DiagramNode = {
               id: `canvas_node:${elemId}`,
               semanticElementId: elemId,
-              x: pos.x,
-              y: pos.y,
-              width: fObj.width ?? 160,
-              height: fObj.height ?? 80,
-              style: {
-                fillColor: '#FFFFFF',
-                strokeColor: '#333333',
-                strokeWidth: 2,
-                fontSize: 14,
-                fontFamily: 'sans-serif',
-                fontColor: '#333333',
-                opacity: 1,
-                borderRadius: 8,
-                showShadow: false,
-              },
-              collapsed: false,
-              zIndex: 0,
-              locked: false,
+              x: pos.x, y: pos.y,
+              width: fObj.width ?? 160, height: fObj.height ?? 80,
+              style: { fillColor: '#FFFFFF', strokeColor: '#333333', strokeWidth: 2, fontSize: 14, fontFamily: 'sans-serif', fontColor: '#333333', opacity: 1, borderRadius: 8, showShadow: false },
+              collapsed: false, zIndex: 0, locked: false,
             };
             addNodeToDiagram(activeDiagramId, node);
             engine.addObject(fObj);
+            console.log('[handleDrop] Created', elementType, 'at', pos);
           }
-        } catch { /* ignore */ }
+        } catch (err) { console.error('[handleDrop] render error:', err); }
       }
     },
     [engine, projectName, addElement, addNodeToDiagram],
