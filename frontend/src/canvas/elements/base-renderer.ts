@@ -265,9 +265,10 @@ export abstract class BaseElementRenderer<T extends SemanticElement> {
       evented: true,
     });
 
-    // 设置 Group 的 data
+    // 设置 Group 的 data（InteractionHandler 需要 type 字段分类对象）
     setChildData(group, {
       id: element.id,
+      type: 'element' as const,
       elementType: element.type,
     });
 
