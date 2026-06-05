@@ -52,30 +52,58 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
     REQ: '需求图', ACT: '活动图', STM: '状态机图', SD: '序列图', UC: '用例图',
   };
 
-  // ---- 监听元素名称变更 → 同步画布标签 ----
+  // ---- 监听元素变更 → 完全同步到画布 ----
   const prevElementsRef = useRef<Map<string, string>>(new Map());
   useEffect(() => {
     if (!engineRef.current) return;
+    const fabricCanvas = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[]; remove: (o: FabricObject) => void; requestRenderAll: () => void } }).canvas;
+    if (!fabricCanvas) return;
     const prev = prevElementsRef.current;
+    const currentIds = new Set(semanticModel.elements.map((e) => e.id));
+
     for (const el of semanticModel.elements) {
-      const oldName = prev.get(el.id);
-      if (oldName !== undefined && oldName !== el.name) {
-        // 名称变化 → 更新画布
-        const fabricObjs = (engineRef.current as unknown as { canvas: { getObjects: () => FabricObject[] } }).canvas?.getObjects() ?? [];
-        for (const obj of fabricObjs) {
-          if ((obj as { data?: { id?: string } }).data?.id === el.id) {
-            try {
-              const renderer = globalRegistry.get(el.type);
-              renderer.update(obj, el);
-              (engineRef.current as unknown as { canvas: { requestRenderAll: () => void } }).canvas?.requestRenderAll();
-            } catch { /* pass */ }
-            break;
-          }
+      const oldSnapshot = prev.get(el.id);
+      const newSnapshot = JSON.stringify({ name: el.name, type: el.type, props: el.properties });
+      if (oldSnapshot !== undefined && oldSnapshot !== newSnapshot) {
+        // 元素变化 → 删除旧对象，重新渲染
+        const oldObjs = fabricCanvas.getObjects().filter(
+          (o) => (o as { data?: { id?: string } }).data?.id === el.id,
+        );
+        for (const oldObj of oldObjs) {
+          fabricCanvas.remove(oldObj);
         }
+        try {
+          const node = canvasModel.diagrams
+            .find((d) => d.id === activeDiagramId)
+            ?.nodes.find((n) => n.semanticElementId === el.id);
+          const pos = node ? { x: node.x, y: node.y } : { x: 100, y: 100 };
+          const renderer = globalRegistry.get(el.type);
+          const newObj = renderer.render(el, node?.style);
+          newObj.set({ left: pos.x, top: pos.y });
+          (engineRef.current as unknown as { addObject: (o: FabricObject) => void }).addObject(newObj);
+          // Update node dimensions
+          if (node) {
+            useStore.getState().addNodeToDiagram(
+              activeDiagramId!,
+              { ...node, width: newObj.width ?? node.width, height: newObj.height ?? node.height },
+            );
+          }
+        } catch (err) { console.error('[sync] re-render error:', err); }
       }
-      prev.set(el.id, el.name);
+      prev.set(el.id, newSnapshot);
     }
-  }, [semanticModel.elements]);
+    // Clean up deleted elements
+    for (const [id] of prev) {
+      if (!currentIds.has(id)) {
+        const oldObjs = fabricCanvas.getObjects().filter(
+          (o) => (o as { data?: { id?: string } }).data?.id === id,
+        );
+        for (const oldObj of oldObjs) fabricCanvas.remove(oldObj);
+        prev.delete(id);
+      }
+    }
+    fabricCanvas.requestRenderAll();
+  }, [semanticModel.elements, activeDiagramId]);
 
   // 获取元素类型的默认 properties
   const getDefaultProperties = (elemType: string): Record<string, unknown> => {
