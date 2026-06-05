@@ -165,22 +165,30 @@ export class CanvasEngine implements ICanvasEngine {
 
     this.config = { ...config };
 
-    // 创建 HTMLCanvasElement 并添加到容器中。
-    // Fabric.js v6 Canvas 构造函数接受 HTMLCanvasElement 或字符串选择器。
+    const w = config.width;
+    const h = config.height;
+    console.log(`[CanvasEngine] Initializing canvas ${w}x${h}, container:`, container.clientWidth, 'x', container.clientHeight);
+
+    // 创建 canvas 元素
     const canvasEl = document.createElement('canvas');
+    canvasEl.width = w;
+    canvasEl.height = h;
     container.appendChild(canvasEl);
 
+    // 确保容器可以看到 canvas
+    container.style.overflow = 'hidden';
+
     this.canvas = new Canvas(canvasEl, {
-      width: config.width,
-      height: config.height,
+      width: w,
+      height: h,
       backgroundColor: config.backgroundColor,
       selection: true,
       preserveObjectStacking: true,
       renderOnAddRemove: true,
-      enableRetinaScaling: true,
       stopContextMenu: true,
       fireMiddleClick: true,
     });
+    console.log('[CanvasEngine] Fabric Canvas created, element:', canvasEl.width, 'x', canvasEl.height);
 
     this.snapToGridEnabled = config.snapToGrid;
     this.registerFabricEvents();

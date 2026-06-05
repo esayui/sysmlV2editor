@@ -144,10 +144,9 @@
 
 .canvas-container {
   flex: 1;
-}
-
-.canvas-container canvas {
-  display: block;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .canvas-placeholder {
