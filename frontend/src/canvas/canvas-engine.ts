@@ -780,6 +780,16 @@ export function useCanvasEngine(
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
 
+    // 根据父容器尺寸设置 canvas 宽高
+    const parent = canvasEl.parentElement;
+    if (parent) {
+      const rect = parent.getBoundingClientRect();
+      if (rect.width > 0) canvasEl.width = rect.width;
+      if (rect.height > 0) canvasEl.height = rect.height;
+    }
+    if (!canvasEl.width) canvasEl.width = config?.width ?? 800;
+    if (!canvasEl.height) canvasEl.height = config?.height ?? 600;
+
     const instance = new CanvasEngine();
     const mergedConfig: CanvasConfig = { ...DEFAULT_CANVAS_CONFIG, ...config };
     instance.initialize(canvasEl, mergedConfig);
