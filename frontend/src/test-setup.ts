@@ -243,3 +243,44 @@ const originalGetContext = HTMLCanvasElement.prototype.getContext;
 ): void {
   callback(new Blob([], { type: 'image/png' }));
 };
+
+// ---- Polyfill DragEvent & DataTransfer (jsdom lacks these) ----
+
+class DataTransferMock {
+  private _data: Record<string, string> = {};
+  private _effectAllowed: string = 'none';
+  private _dropEffect: string = 'none';
+  items = { add: () => {} };
+  files = [] as unknown as FileList;
+  types: string[] = [];
+
+  setData(format: string, data: string): void {
+    this._data[format] = data;
+    if (!this.types.includes(format)) this.types.push(format);
+  }
+  getData(format: string): string {
+    return this._data[format] || '';
+  }
+  clearData(format?: string): void {
+    if (format) { delete this._data[format]; }
+    else { this._data = {}; this.types = []; }
+  }
+  setDragImage(): void {}
+  get effectAllowed(): string { return this._effectAllowed; }
+  set effectAllowed(v: string) { this._effectAllowed = v; }
+  get dropEffect(): string { return this._dropEffect; }
+  set dropEffect(v: string) { this._dropEffect = v; }
+}
+
+class DragEventMock extends MouseEvent {
+  private _dt: DataTransferMock;
+  constructor(type: string, init?: MouseEventInit & { dataTransfer?: DataTransferMock }) {
+    super(type, init);
+    this._dt = init?.dataTransfer || new DataTransferMock();
+  }
+  get dataTransfer(): DataTransferMock { return this._dt; }
+  set dataTransfer(v: DataTransferMock) { this._dt = v; }
+}
+
+(globalThis as Record<string, unknown>).DragEvent = DragEventMock;
+(globalThis as Record<string, unknown>).DataTransfer = DataTransferMock;

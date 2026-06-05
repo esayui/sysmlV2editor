@@ -44,8 +44,8 @@
 |------|------|:----:|:------:|:----:|------|----------|----------|
 | M-BE-01 | [SysML v2 Parser](M-BE-01-sysmlv2-parser.md) | ✅ 已完成 | 25 | 25 | 2026-06-05 | 2026-06-05 | — |
 | M-BE-02 | [Model Manager](M-BE-02-model-manager.md) | ✅ 已完成 | 17 | 17 | BE-01 | 2026-06-05 | 2026-06-05 |
-| M-BE-03 | [Model Validator](M-BE-03-model-validator.md) | ⬜ 未开始 | 15 | 0 | BE-02 | — | — |
-| M-BE-04 | [File Service](M-BE-04-file-service.md) | ⬜ 未开始 | 17 | 0 | BE-01, BE-02 | — | — |
+| M-BE-03 | [Model Validator](M-BE-03-model-validator.md) | ✅ 已完成 | 15 | 15 | BE-02 | 2026-06-05 | 2026-06-05 |
+| M-BE-04 | [File Service](M-BE-04-file-service.md) | ✅ 已完成 | 17 | 17 | BE-01, BE-02 | 2026-06-05 | 2026-06-05 |
 | M-BE-05 | [Export Service](M-BE-05-export-service.md) | ✅ 已完成 | 12 | 12 | — | 2026-06-05 | 2026-06-05 |
 | M-BE-06 | [API Layer](M-BE-06-api-layer.md) | ⬜ 未开始 | 19 | 0 | BE-02..05 | — | — |
 

@@ -1,0 +1,159 @@
+/* ===== Toolbox Panel ===== */
+
+.toolbox-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  user-select: none;
+  background-color: #ffffff;
+}
+
+/* ---- Search ---- */
+
+.toolbox-search {
+  padding: 8px;
+  border-bottom: 1px solid #e8e8e8;
+  flex-shrink: 0;
+}
+
+.toolbox-search-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.toolbox-search-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+.toolbox-search-input::placeholder {
+  color: #bfbfbf;
+}
+
+/* ---- Category List ---- */
+
+.toolbox-categories {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ---- Category ---- */
+
+.toolbox-category {
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.toolbox-category-header {
+  display: flex;
+  align-items: center;
+  padding: 7px 12px;
+  cursor: pointer;
+  background-color: #fafafa;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  transition: background-color 0.15s;
+}
+
+.toolbox-category-header:hover {
+  background-color: #f0f0f0;
+}
+
+.toolbox-category-arrow {
+  width: 14px;
+  font-size: 10px;
+  margin-right: 4px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.toolbox-category-label {
+  flex: 1;
+}
+
+/* ---- Items Container ---- */
+
+.toolbox-category-items {
+  padding: 0;
+}
+
+/* ---- Item ---- */
+
+.toolbox-item {
+  display: flex;
+  align-items: center;
+  padding: 5px 12px 5px 20px;
+  cursor: grab;
+  transition: background-color 0.15s;
+  border-left: 3px solid transparent;
+  min-height: 32px;
+}
+
+.toolbox-item:active {
+  cursor: grabbing;
+}
+
+.toolbox-item:hover {
+  background-color: #f0f5ff;
+}
+
+.toolbox-item.selected {
+  background-color: #e6f7ff;
+  border-left-color: #1890ff;
+}
+
+.toolbox-item.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+/* ---- Item Parts ---- */
+
+.toolbox-item-icon {
+  flex-shrink: 0;
+  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.toolbox-item-icon-inner {
+  /* Additional icon styling is applied inline */
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.toolbox-item-label {
+  flex: 1;
+  font-size: 12px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toolbox-item-hotkey {
+  font-size: 10px;
+  color: #bbb;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background: #f5f5f5;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 4px;
+  flex-shrink: 0;
+  border: 1px solid #eee;
+}
+
+/* ---- Empty State ---- */
+
+.toolbox-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: #bfbfbf;
+  font-size: 12px;
+}

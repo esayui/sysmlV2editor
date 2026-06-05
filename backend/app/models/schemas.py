@@ -1,103 +1,158 @@
 """
-Pydantic 请求/响应模型 — API 数据校验与序列化
+Pydantic request / response models for API data validation and serialization.
 
-来源: 详细设计 §4.6.3
+Source: detailed-design.md §4.6.3.
+JSON keys use camelCase (via alias), Python attributes use snake_case.
 """
-from pydantic import BaseModel, Field
+
+from __future__ import annotations
+
 from typing import Any
 
-
-# ===== 模型解析 =====
-
-
-class ParseRequest(BaseModel):
-    text: str = Field(..., min_length=1, description="SysML v2 文本内容")
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class ParseResponse(BaseModel):
+def _to_camel(snake: str) -> str:
+    """Convert snake_case to camelCase (e.g. ``dir_path`` → ``dirPath``)."""
+    parts = snake.split("_")
+    return parts[0] + "".join(p.capitalize() for p in parts[1:])
+
+
+# =============================================================================
+#  Common base — all models auto-alias snake_case → camelCase
+# =============================================================================
+
+
+class CamelModel(BaseModel):
+    """Base model that serialises Python snake_case attributes as JSON camelCase."""
+
+    model_config = ConfigDict(
+        alias_generator=_to_camel,
+        populate_by_name=True,
+    )
+
+
+# =============================================================================
+#  Error response
+# =============================================================================
+
+
+class ErrorResponse(CamelModel):
+    code: str
+    message: str
+    location: dict[str, int] | None = None
+    details: Any | None = None
+
+
+# =============================================================================
+#  Model parse / serialize
+# =============================================================================
+
+
+class ParseRequest(CamelModel):
+    text: str = Field(..., min_length=1, description="SysML v2 text content")
+
+
+class ParseResponse(CamelModel):
     model: dict[str, Any]
     warnings: list[str] = []
 
 
-# ===== 项目文件操作 =====
+class SerializeRequest(CamelModel):
+    model: dict[str, Any] = Field(
+        ..., description="Semantic model JSON (SemanticModel dictionary)"
+    )
 
 
-class ProjectMetadataDict(BaseModel):
+class SerializeResponse(CamelModel):
+    text: str
+
+
+# =============================================================================
+#  Project file operations
+# =============================================================================
+
+
+class ProjectMetadataDict(CamelModel):
     name: str
-    created: str  # ISO 8601
-    modified: str
-    version: str  # 项目格式版本号
+    created: str   # ISO 8601
+    modified: str  # ISO 8601
+    version: str   # format version (e.g. "1.0")
 
 
-class ProjectDataDict(BaseModel):
+class ProjectDataDict(CamelModel):
     metadata: ProjectMetadataDict
     semantic_model: dict[str, Any]
     canvas_model: dict[str, Any]
 
 
-class CreateProjectRequest(BaseModel):
-    dir_path: str = Field(..., description="项目目录路径")
+class CreateProjectRequest(CamelModel):
+    dir_path: str = Field(..., description="Project directory path")
     name: str = Field(..., min_length=1, max_length=128)
 
 
-class CreateProjectResponse(BaseModel):
+class CreateProjectResponse(CamelModel):
     project_data: ProjectDataDict
 
 
-class OpenProjectRequest(BaseModel):
-    file_path: str = Field(..., description=".sysml2proj 文件路径")
+class OpenProjectRequest(CamelModel):
+    file_path: str = Field(..., description="Path to .sysml2proj file")
 
 
-class OpenProjectResponse(BaseModel):
+class OpenProjectResponse(CamelModel):
     project_data: ProjectDataDict
 
 
-class SaveProjectRequest(BaseModel):
+class SaveProjectRequest(CamelModel):
     file_path: str
     project_data: ProjectDataDict
 
 
-class SaveProjectResponse(BaseModel):
+class SaveProjectResponse(CamelModel):
     success: bool
     file_path: str
     file_size: int = 0
 
 
-# ===== 模型校验 =====
+# =============================================================================
+#  Model validation
+# =============================================================================
 
 
-class ValidateRequest(BaseModel):
+class ValidateRequest(CamelModel):
     model: dict[str, Any]
 
 
-class ValidationIssueDict(BaseModel):
-    code: str  # 错误码 (如 'E001', 'W002')
-    message: str  # 人类可读消息
+class ValidationIssueDict(CamelModel):
+    code: str             # error code (e.g. 'E001', 'W002')
+    message: str          # human-readable message
     element_id: str | None = None
-    severity: str  # 'error' | 'warning'
+    severity: str         # 'error' | 'warning'
     source_location: str | None = None
 
 
-class ValidateResponse(BaseModel):
+class ValidateResponse(CamelModel):
     is_valid: bool
     errors: list[ValidationIssueDict] = []
     warnings: list[ValidationIssueDict] = []
 
 
-# ===== 导出 =====
+# =============================================================================
+#  Export
+# =============================================================================
 
 
-class ExportSVGRequest(BaseModel):
+class ExportSVGRequest(CamelModel):
     svg_markup: str
     output_path: str
 
 
-class ExportPNGRequest(BaseModel):
-    image_data: str = Field(..., description="Base64 编码的 PNG 数据")
+class ExportPNGRequest(CamelModel):
+    image_data: str = Field(..., description="Base64-encoded PNG data")
     output_path: str
 
 
-class ExportResponse(BaseModel):
+class ExportResponse(CamelModel):
     success: bool
     file_path: str = ""
     file_size: int = 0
