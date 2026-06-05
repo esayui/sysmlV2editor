@@ -165,18 +165,16 @@ export class CanvasEngine implements ICanvasEngine {
 
     this.config = { ...config };
 
-    // Use container's actual size, falling back to config defaults
     const w = container.clientWidth || config.width;
     const h = container.clientHeight || config.height;
 
+    // 让 Fabric.js 创建 canvas 并插入到容器中
     const canvasEl = document.createElement('canvas');
-    canvasEl.width = w;
-    canvasEl.height = h;
-    canvasEl.style.display = 'block';
+    canvasEl.id = `fabric-canvas-${Date.now()}`;
     container.appendChild(canvasEl);
     container.style.overflow = 'hidden';
 
-    this.canvas = new Canvas(canvasEl, {
+    this.canvas = new Canvas(canvasEl.id, {
       width: w,
       height: h,
       backgroundColor: config.backgroundColor,

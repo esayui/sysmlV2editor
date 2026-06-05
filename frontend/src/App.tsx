@@ -331,7 +331,7 @@ function ModelingPage({ projectName, onBack }: { projectName: string; onBack: ()
             </span>
           )}
         </div>
-        <div className="canvas-container" ref={canvasContainerRef} />
+        <div className="fabric-wrapper" ref={canvasContainerRef} />
         {!engine && (
           <div className="canvas-placeholder">
             <div className="canvas-hint">
