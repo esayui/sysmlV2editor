@@ -89,6 +89,18 @@ class TextGenerator:
             if supertypes:
                 supertype_clause = f" :> {', '.join(supertypes)}"
             body = self._generate_element_body(element, model or {}, inner_indent, format)
+            if elem_type == "ConstraintDefinition":
+                # Constraint body already includes braces; avoid double-wrapping.
+                params = props.get("parameters", [])
+                if params:
+                    param_str = ", ".join(
+                        f"{p.get('name', '')} : {p.get('type', '')}" for p in params
+                    )
+                    expr = props.get("expression", "")
+                    return f"{prefix}{kw} def {name} ({param_str}) {{ {expr} }}"
+                else:
+                    expr = props.get("expression", "")
+                    return f"{prefix}{kw} def {name} {{ {expr} }}"
             if body:
                 return f"{prefix}{kw} def {name}{supertype_clause} {{\n{body}\n{prefix}}}"
             return f"{prefix}{kw} def {name}{supertype_clause} {{ }}"

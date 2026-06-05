@@ -25,7 +25,7 @@
 
 | 编号 | 模块 | 状态 | 子任务 | 完成 | 依赖 | 开始日期 | 完成日期 |
 |------|------|:----:|:------:|:----:|------|----------|----------|
-| M-FE-01 | [Canvas Engine](M-FE-01-canvas-engine.md) | ⬜ 未开始 | 20 | 0 | SH-01 | — | — |
+| M-FE-01 | [Canvas Engine](M-FE-01-canvas-engine.md) | ✅ 已完成 | 20 | 20 | SH-01 | 2026-06-05 | 2026-06-05 |
 | M-FE-02 | [Element Renderers](M-FE-02-element-renderers.md) | ⬜ 未开始 | 18 | 0 | FE-01, FE-08 | — | — |
 | M-FE-03 | [Connection Manager](M-FE-03-connection-manager.md) | ⬜ 未开始 | 14 | 0 | FE-01, FE-02 | — | — |
 | M-FE-04 | [Interaction Handler](M-FE-04-interaction-handler.md) | ⬜ 未开始 | 17 | 0 | FE-01, FE-08 | — | — |
@@ -33,7 +33,7 @@
 | M-FE-06 | [Properties Panel](M-FE-06-properties-panel.md) | ⬜ 未开始 | 17 | 0 | FE-01, FE-02, FE-08 | — | — |
 | M-FE-07 | [Model Tree Panel](M-FE-07-model-tree-panel.md) | ⬜ 未开始 | 17 | 0 | FE-08 | — | — |
 | M-FE-08 | [State Store](M-FE-08-state-store.md) | ✅ 已完成 | 20 | 20 | 2026-06-05 | 2026-06-05 |
-| M-FE-09 | [API Client](M-FE-09-api-client.md) | ⬜ 未开始 | 16 | 0 | SH-01 | — | — |
+| M-FE-09 | [API Client](M-FE-09-api-client.md) | ✅ 已完成 | 16 | 16 | SH-01 | 2026-06-05 | 2026-06-05 |
 | M-FE-10 | [Undo/Redo Engine](M-FE-10-undo-redo-engine.md) | ⬜ 未开始 | 18 | 0 | FE-08 | — | — |
 
 ---
@@ -43,10 +43,10 @@
 | 编号 | 模块 | 状态 | 子任务 | 完成 | 依赖 | 开始日期 | 完成日期 |
 |------|------|:----:|:------:|:----:|------|----------|----------|
 | M-BE-01 | [SysML v2 Parser](M-BE-01-sysmlv2-parser.md) | ✅ 已完成 | 25 | 25 | 2026-06-05 | 2026-06-05 | — |
-| M-BE-02 | [Model Manager](M-BE-02-model-manager.md) | ⬜ 未开始 | 17 | 0 | BE-01 | — | — |
+| M-BE-02 | [Model Manager](M-BE-02-model-manager.md) | ✅ 已完成 | 17 | 17 | BE-01 | 2026-06-05 | 2026-06-05 |
 | M-BE-03 | [Model Validator](M-BE-03-model-validator.md) | ⬜ 未开始 | 15 | 0 | BE-02 | — | — |
 | M-BE-04 | [File Service](M-BE-04-file-service.md) | ⬜ 未开始 | 17 | 0 | BE-01, BE-02 | — | — |
-| M-BE-05 | [Export Service](M-BE-05-export-service.md) | ⬜ 未开始 | 12 | 0 | — | — | — |
+| M-BE-05 | [Export Service](M-BE-05-export-service.md) | ✅ 已完成 | 12 | 12 | — | 2026-06-05 | 2026-06-05 |
 | M-BE-06 | [API Layer](M-BE-06-api-layer.md) | ⬜ 未开始 | 19 | 0 | BE-02..05 | — | — |
 
 ---
